@@ -114,3 +114,7 @@ double Decode(Operation* tree){
     else
         return 0;
 }
+
+
+//* Парсер функций(не замена парсеру арифметики!)
+
