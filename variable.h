@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <cstdint>
 #include <cstring>
@@ -9,19 +11,19 @@ class Var{
         std::vector<uint8_t> v;
         Var(int a){
             v.resize(4);
-            for(int i=0;i<31;i++){
-                v[i/8] |= ((1<<i)&a)>>(i-i%4);
-            }
-            type='i';
+            std::memcpy(v.data(), &a, 4);
+            type = 'i';
+        }
+        Var(bool a){
+            v.resize(1);
+            if(a) v[0]=255;
+            else v[0]=0;
+            type='b';
         }
         Var(double a){
-            uint64_t b;
             v.resize(8);
-            std::memcpy(&a,&b,8);
-            for(int i=0;i<7;i++){
-                v[7-i] |= b&(255<<(i*8));
-            }
-            type='d';
+            std::memcpy(v.data(), &a, 8);
+            type = 'd';
         }
         Var(std::string a){
             v.resize(a.length());
@@ -30,19 +32,18 @@ class Var{
             }
             type='s';
         }
-        int get_i(){
-            int in=0;
-            for(int i=0;i<v.size();i++)
-                in |= v[i]<<(i*8);
+       int get_i(){
+            int in;
+            std::memcpy(&in, v.data(), 4);
             return in;
         }
         double get_d(){
-            double o=0;
-            uint64_t in=0;
-            for(int i=0;i<v.size();i++)
-                in |= v[i]<<(i*8);
-            std::memcpy(&in,&o,64);
+            double o;
+            std::memcpy(&o, v.data(), 8);
             return o;
+        }
+        bool get_b(){
+            return v[0]==255;
         }
         std::string get_s(){
             std::string s;
