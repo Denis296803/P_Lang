@@ -19,9 +19,9 @@ public:
     std::vector<_Operation*> arguments;
     Function* function;
     bool is_leaf = false;
-    bool is_func=true;
+    bool is_func = false;
     _Operation(_Operation* par1,_Operation* par2,Operator* op){a=par1;b=par2;oper=op;is_leaf = false;is_func=false;}
-    _Operation(Var* c){constant = c;is_leaf = true;}
+    _Operation(Var* c){constant = c;is_leaf = true;is_func=false;}
     _Operation(Function* func,std::vector<_Operation*> args){function = func; arguments = args;is_leaf = false;is_func=true;}
     ~_Operation(){delete a; 
         delete b; 
@@ -32,6 +32,7 @@ public:
 
 // Парсер(да, знаю, удивительно)
 _Operation* Parse(const std::string& string,const std::vector<Operator*>& operators, const std::vector<Function*>& functions){
+    //std::cerr<<"Parse: "<<string<<std::endl;
     std::string str = string;
     if(str.size()==0){return new _Operation(0);}
     //Обрезка скобок
@@ -101,7 +102,6 @@ _Operation* Parse(const std::string& string,const std::vector<Operator*>& operat
                     bestIdOper=opers[i];
                 }
             }
-            //TODO: конвертация, все такое...
 
             
         }
@@ -133,8 +133,6 @@ _Operation* Parse(const std::string& string,const std::vector<Operator*>& operat
                 vec2.push_back(Parse(vec1[i],operators,functions));
             }
 
-            //TODO: тут тоже конвертация не помешала бы
-
         }
         if(bestDepthFunc>=bestDepthOper)
             return new _Operation(Parse(str.substr(0,bestPositionOper),operators,functions),Parse(str.substr(bestPositionOper+operators[bestIdOper]->oper.size()),operators,functions),operators[bestIdOper]);
@@ -142,48 +140,46 @@ _Operation* Parse(const std::string& string,const std::vector<Operator*>& operat
         return operation;
     }
     else{
-
-        //TODO: добавить определитель типа и функции для конвертации(ниже функция string -> double)
-        short int sign = 0,numIntParts=0,numDoubleParts=-1; unsigned long long int intPart=0,doublePart=0;
-        for(int i=0;i<str.length();i++){
-            if(str[i]=='-')
-                sign=-1;
-            else if(str[i]==','||str[i]=='.')
-                numDoubleParts=0;
-            else if(str[i]>='0'&&str[i]<='9'){
-                if(sign==0) sign=1;
-                if(numDoubleParts==-1){
-                    numIntParts++;
-                    intPart=intPart*10+str[i]-'0';
-                }
-                else{
-                    numDoubleParts++;
-                    doublePart=doublePart*10+str[i]-'0';
-                }
-            }
-        }
-        double output=sign*(intPart+doublePart/std::pow(10,numDoubleParts));
-        return new _Operation(new Var(output));
+        return new _Operation(AutoVar(str));
     }
 
 }
 // Декодер(думаю, тут очевидно)
 Var* Decode(_Operation* tree){
-    if(tree->is_leaf)
+    std::cerr<<"Decode: "<<tree->is_func<<" "<<tree->is_leaf<<" "<<((tree->is_func)?tree->function->name:((!(tree->is_func)&&!(tree->is_leaf))?tree->oper->oper:To_String(tree->constant)))<<std::endl;
+    if(tree->is_leaf){
+        //std::cerr<<tree->constant->type<<std::endl;
+        // if(tree->constant->type=='s'){
+        //     std::string str = tree->constant->get_s();
+        //     if(str[0]=='"'&&str[str.length()-1]=='"') tree->constant = new Var(str.substr(1,str.length()-2));
+        // }
         return tree->constant;
+    }
     else if(!(tree->is_leaf)){
-        if(!tree->is_func){
-            if(tree->oper->is_unary)
-                return tree->oper->F1(Decode(tree->a));
-            else
-                return tree->oper->F2(Decode(tree->a),Decode(tree->b));
+        if(!(tree->is_func)){
+            if(tree->oper->is_unary){
+                Var* a = tree->oper->F1(Decode(tree->a));
+                return a;
+                delete a;
+            }
+            else{
+                Var* a=Decode(tree->a); Var* b=Decode(tree->b);
+                return tree->oper->F2(a,b);
+                delete a,b;
+            }
         }
         else{
             std::vector<Var*> v1;
+            //std::cerr<<"Decode1: "<<tree->arguments.size()<<"; ";
             for(_Operation* v:tree->arguments){
+                //std::cerr<<"Call_";
                 v1.push_back(Decode(v));
             }
-            return tree->function->F(v1);
+            //std::cerr<<"Decode1: "<<tree->arguments.size()<<" "<<std::endl;
+            Var* temp = tree->function->F(v1);
+            //std::cerr<<"Decode1: "<<tree->arguments.size()<<" "<<To_String(temp)<<std::endl;
+            return temp;
+            delete temp;
         }
     }
     else

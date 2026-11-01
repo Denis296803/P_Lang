@@ -1,6 +1,8 @@
 #pragma once
 
+#include "variable.h"
 #include <string>
+#include <cmath>
 
 //* Просто сборище операторов, ничего особо интересного
 
@@ -10,8 +12,8 @@ public:
     std::string oper;
     int priority;
     bool is_unary;
-    virtual double F1(double a){return 0;};
-    virtual double F2(double a, double b){return 0;};
+    virtual Var* F1(Var* a){return nullptr;};
+    virtual Var* F2(Var* a, Var* b){return nullptr;};
 };
 
 class Add : public Operator
@@ -23,9 +25,12 @@ public:
         priority = 0;
         is_unary = false;
     }
-    double F2(double a, double b) override
-    {
-        return a+b;
+    Var* F2(Var* a, Var* b) override
+    {   
+        if(a->type=='s'||b->type=='s'){
+            return new Var(To_String(a)+To_String(b));
+        }
+        return new Var(To_Double(a)+To_Double(b));
     }
 };
 class Sub : public Operator
@@ -37,9 +42,9 @@ public:
         priority = 1;
         is_unary = false;
     }
-    double F2(double a, double b) override
+    Var* F2(Var* a, Var* b) override
     {
-        return a-b;
+        return new Var(To_Double(a)-To_Double(b));
     }
 };
 class Mul : public Operator
@@ -51,9 +56,9 @@ public:
         priority = 2;
         is_unary = false;
     }
-    double F2(double a, double b) override
+    Var* F2(Var* a, Var* b) override
     {
-        return a*b;
+        return new Var(To_Double(a)*To_Double(b));
     }
 };
 class Div : public Operator
@@ -65,9 +70,9 @@ public:
         priority = 3;
         is_unary = false;
     }
-    double F2(double a, double b) override
+    Var* F2(Var* a, Var* b) override
     {
-        return a/b;
+        return new Var(To_Double(a)/To_Double(b));
     }
 };
 class Mod : public Operator
@@ -79,9 +84,9 @@ public:
         priority = 2;
         is_unary = false;
     }
-    double F2(double a, double b) override
+    Var* F2(Var* a, Var* b) override
     {
-        return (int)a%(int)b;
+        return new Var(To_Int(a)%To_Int(b));
     }
 };
 class Pow : public Operator
@@ -93,8 +98,11 @@ public:
         priority = 4;
         is_unary = false;
     }
-    double F2(double a, double b) override
+    Var* F2(Var* a, Var* b) override
     {
-        return std::pow(a,b);
+        double temp1 = To_Double(a),out=1; int temp2=To_Int(b);
+        for(int i=0;i<temp2;i++)
+            out=out*temp1;
+        return new Var(out);
     }
 };
