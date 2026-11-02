@@ -6,11 +6,13 @@
 #include <iostream>
 #include <algorithm>
 
+
+
 class Var{
     public:
         char type;
         std::vector<uint8_t> v;
-
+        std::string name="";
         Var(long long int a){
             v.resize(8);
             std::memcpy(v.data(), &a, 8);
@@ -52,6 +54,8 @@ class Var{
         }
 };
 
+std::vector<Var*> variables;
+
 char Get_Type(std::string str){
     //std::cerr<<str;
     if(str[0]=='"'&&str[str.length()-1]=='"') return 's';
@@ -71,6 +75,7 @@ char Get_Type(std::string str){
     else return 'i';
 }
 
+std::string To_String(Var* x);
 std::string To_String(double x){
     std::string a; int sign=1;
     if(x==0) return "0";
@@ -81,6 +86,7 @@ std::string To_String(double x){
     std::reverse(a.begin(),a.end());
     if(i3!=0) a=a+'.';
     while(i3>0){a=a+(char)((int)i3+'0');i3=10*(i3-(int)i3);}
+    a=a;
     return a;
 }
 std::string To_String(long long int x){
@@ -93,10 +99,13 @@ std::string To_String(long long int x){
     }
     if(sign==-1){a=a+'-';}
     std::reverse(a.begin(),a.end());
+    a=a;
     return a;
 }
 std::string To_String(std::string x){
-    if(x[0]=='"'&&x[x.length()-1]=='"') x = x.substr(1,x.length()-2);
+    for(Var* v : variables){
+        if(v->name==x){return To_String(v);}
+    }
     return x;
 }
 std::string To_String(Var* x){
@@ -164,7 +173,17 @@ long long int To_Int(Var* x){
     else if(x->type=='s') return To_Int(x->get_s());
 }
 
+Var* GetVar(std::string a){
+    for(Var* v : variables){
+        if(v->name==To_String(a)){
+            return v;
+        }
+    }
+    return new Var(false);
+}
+
 Var* AutoVar(std::string str){
+    
     char type = Get_Type(str);
     //std::cerr<<"AutoVar: "<<str<<std::endl;
     if(type=='d') return new Var(To_Double(str));
@@ -172,6 +191,10 @@ Var* AutoVar(std::string str){
     else if(type=='s') return new Var(To_String(str));
 }
 Var* AutoVar(Var* v){
-    if(v->type=='s') return AutoVar(v->get_s());
+    if(v->type=='s'){
+        Var* a = GetVar(v->name);
+        if(a->name!="") return a;
+        else return AutoVar(v->get_s());
+    }
     else return v;
 }

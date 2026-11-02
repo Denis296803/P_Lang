@@ -28,7 +28,8 @@ public:
     Var* F2(Var* a, Var* b) override
     {   
         if(a->type=='s'||b->type=='s'){
-            return new Var(To_String(a)+To_String(b));
+            std::string tmp1 = To_String(b),tmp2 = To_String(a);
+            return new Var(tmp1+tmp2);
         }
         return new Var(To_Double(a)+To_Double(b));
     }
@@ -104,5 +105,28 @@ public:
         for(int i=0;i<temp2;i++)
             out=out*temp1;
         return new Var(out);
+    }
+};
+class Asg : public Operator
+{
+public:
+    Asg()
+    {
+        oper     = "=";
+        priority = -1;
+        is_unary = false;
+    }
+    Var* F2(Var* a, Var* b) override
+    {
+        for(Var* v : variables){
+            if(v->name==To_String(a)){
+                v->type=b->type;
+                v->v=b->v;
+                return b;
+            }
+        }
+        b->name=To_String(a);
+        variables.push_back(b);
+        return b;
     }
 };
