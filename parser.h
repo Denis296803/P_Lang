@@ -38,7 +38,7 @@ public:
 
 // Парсер(да, знаю, удивительно)
 _Operation* Parse(const std::string& string){
-    //std::cerr<<"Parse: "<<string<<std::endl;
+    std::cout<<string<<std::endl;
     std::string str = string;
     if(string[0]=='"'&&string[string.length()-1]=='"'){
         Var* v = new Var(string.substr(1,string.length()-2));
@@ -86,7 +86,7 @@ _Operation* Parse(const std::string& string){
     for(int indexOper1=0;indexOper1<opers.size();indexOper1++){
         bool was_found=false;
         for(int indexOper2=0;indexOper2<opers.size();indexOper2++){
-            if(indexOper1!=indexOper2&&indexesOper[indexOper1]==indexesOper[indexOper2]&&operators[opers[indexOper1]]->oper.length()<operators[opers[indexOper2]]->oper.length()){
+            if(indexOper1!=indexOper2&&(indexesOper[indexOper1]+operators[opers[indexOper1]]->oper.length()>indexesOper[indexOper2]&&indexesOper[indexOper1]<indexesOper[indexOper2]||indexesOper[indexOper2]+operators[opers[indexOper2]]->oper.length()>indexesOper[indexOper1]&&indexesOper[indexOper2]<indexesOper[indexOper1])&&operators[opers[indexOper1]]->oper.length()<operators[opers[indexOper2]]->oper.length()){
                 was_found=true;
                 break;
             }
@@ -100,23 +100,23 @@ _Operation* Parse(const std::string& string){
 
 
     for(int indexFunc=0;indexFunc<functions.size();indexFunc++){
-            for(int i=0;i+functions[indexFunc]->name.size()<=str.size();i++){
-                if(str.substr(i,(functions[indexFunc]->name.size()))==functions[indexFunc]->name){
-                    int c1=0,c2=0;
-                    for(int j=0;j<i;j++){
-                        if(str[j]=='(') c1++;
-                        else if(str[j]==')') c1--;
-                        else if(str[j]=='"') c2++;
-                    }
-                    if(c2%2==0){indexesFunc.push_back(i);funcs.push_back(indexFunc); depthsFunc.push_back(c1);}
+        for(int i=0;i+functions[indexFunc]->name.size()<=str.size();i++){
+            if(str.substr(i,(functions[indexFunc]->name.size()))==functions[indexFunc]->name){
+                int c1=0,c2=0;
+                for(int j=0;j<i;j++){
+                    if(str[j]=='(') c1++;
+                    else if(str[j]==')') c1--;
+                    else if(str[j]=='"') c2++;
                 }
+                if(c2%2==0){indexesFunc.push_back(i);funcs.push_back(indexFunc); depthsFunc.push_back(c1);}
             }
+        }
     }
 
     for(int indexFunc1=0;indexFunc1<funcs.size();indexFunc1++){
         bool was_found=false;
         for(int indexFunc2=0;indexFunc2<funcs.size();indexFunc2++){
-            if(indexFunc1!=indexFunc2&&indexesFunc[indexFunc1]==indexesFunc[indexFunc2]&&functions[funcs[indexFunc1]]->name.length()<functions[funcs[indexFunc2]]->name.length()){
+            if(indexFunc1!=indexFunc2&&(indexesFunc[indexFunc1]+functions[funcs[indexFunc1]]->name.length()>indexesFunc[indexFunc2]&&indexesFunc[indexFunc1]<indexesFunc[indexFunc2]||indexesFunc[indexFunc2]+functions[funcs[indexFunc2]]->name.length()>indexesFunc[indexFunc1]&&indexesFunc[indexFunc2]<indexesFunc[indexFunc1])&&functions[funcs[indexFunc1]]->name.length()<functions[funcs[indexFunc2]]->name.length()){
                 was_found=true;
                 break;
             }
@@ -128,17 +128,17 @@ _Operation* Parse(const std::string& string){
         }
     }
 
-    if(indexesOper.size()>0||indexesFunc.size()>0){
+    if(indexesOperFinal.size()>0||indexesFuncFinal.size()>0){
         int bestIdOper=-1,bestDepthOper=2147483647,bestPriorityOper=2147483647,bestPositionOper=2147483647;
         int bestIdFunc=-1,bestDepthFunc=2147483647,bestPositionFunc=2147483647;
         std::vector<_Operation*> vec2;
         if(indexesOper.size()>0){
             //Если есть операторы, находим с наименьшим приоритетом
             
-            for(int i=0;i<indexesOper.size();i++){
+            for(int i=0;i<indexesOperFinal.size();i++){
                 if(bestDepthOper>depthsOperFinal[i]||
-                    bestDepthOper==depthsOperFinal[i]&&bestPriorityOper>operators[opers[i]]->priority||
-                    bestDepthOper==depthsOperFinal[i]&&bestPriorityOper==operators[opers[i]]->priority&&bestPositionOper>indexesOperFinal[i]
+                    bestDepthOper==depthsOperFinal[i]&&bestPriorityOper>operators[opersFinal[i]]->priority||
+                    bestDepthOper==depthsOperFinal[i]&&bestPriorityOper==operators[opersFinal[i]]->priority&&bestPositionOper>indexesOperFinal[i]
                 ){
                     bestDepthOper=depthsOperFinal[i];
                     bestPriorityOper=operators[opersFinal[i]]->priority;
@@ -184,13 +184,13 @@ _Operation* Parse(const std::string& string){
         return operation;
     }
     else{
-        //std::cout<<"Parse: "<<string<<";"<<std::endl;
         return new _Operation(AutoVar(str));
     }
 
 }
 // Декодер(думаю, тут очевидно)
 Var* Decode(_Operation* tree){
+    //std::cout<<tree->is_func<<tree->is_leaf<<std::endl;
     if(tree->is_leaf){
         return tree->constant;
     }
@@ -210,7 +210,6 @@ Var* Decode(_Operation* tree){
         else{
             std::vector<Var*> v1;
             for(_Operation* v:tree->arguments){
-                //std::cerr<<"Call_";
                 v1.push_back(Decode(v));
             }
             Var* temp = tree->function->F(v1);

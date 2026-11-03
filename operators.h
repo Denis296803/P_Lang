@@ -3,6 +3,7 @@
 #include "variable.h"
 #include <string>
 #include <cmath>
+#include <iostream>
 
 //* Просто сборище операторов, ничего особо интересного
 
@@ -27,6 +28,8 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {   
+        if(a->type=='p') a=GetVar(To_Pointer(a));
+        if(b->type=='p') b=GetVar(To_Pointer(b));
         if(a->type=='s'||b->type=='s'){
             return new Var(To_String(a)+To_String(b));
         }
@@ -44,6 +47,8 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
+        if(a->type=='p') a=GetVar(To_Pointer(a));
+        if(b->type=='p') b=GetVar(To_Pointer(b));
         return new Var(To_Double(a)-To_Double(b));
     }
 };
@@ -58,6 +63,8 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
+        if(a->type=='p') a=GetVar(To_Pointer(a));
+        if(b->type=='p') b=GetVar(To_Pointer(b));
         return new Var(To_Double(a)*To_Double(b));
     }
 };
@@ -72,6 +79,8 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
+        if(a->type=='p') a=GetVar(To_Pointer(a));
+        if(b->type=='p') b=GetVar(To_Pointer(b));
         return new Var(To_Double(a)/To_Double(b));
     }
 };
@@ -86,6 +95,8 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
+        if(a->type=='p') a=GetVar(To_Pointer(a));
+        if(b->type=='p') b=GetVar(To_Pointer(b));
         return new Var(To_Int(a)%To_Int(b));
     }
 };
@@ -100,6 +111,8 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
+        if(a->type=='p') a=GetVar(To_Pointer(a));
+        if(b->type=='p') b=GetVar(To_Pointer(b));
         double temp1 = To_Double(a),out=1; int temp2=To_Int(b);
         for(int i=0;i<temp2;i++)
             out=out*temp1;
@@ -117,15 +130,7 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        for(Var* v : variables){
-            if(v->name==To_String(a)){
-                v->type=b->type;
-                v->v=b->v;
-                return b;
-            }
-        }
-        b->name=To_String(a);
-        variables.push_back(b);
+        SetVar(To_Pointer(a),b);
         return b;
     }
 };

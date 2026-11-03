@@ -14,7 +14,8 @@ class Write:public Function{
     public:
         Write(){name = "Console.Write";}
         Var* F(std::vector<Var*> args) override{
-            std::cout<<To_String(args[0]);
+            std::string tmp = To_String(args[0]);
+            std::cout<<tmp;
             return new Var(0ll);
         }
 };
