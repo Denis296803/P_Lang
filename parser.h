@@ -40,7 +40,11 @@ public:
 _Operation* Parse(const std::string& string){
     //std::cerr<<"Parse: "<<string<<std::endl;
     std::string str = string;
-    if(string[0]=='"'&&string[string.length()-1]=='"') return new _Operation(new Var(string.substr(1,string.length()-2)));
+    if(string[0]=='"'&&string[string.length()-1]=='"'){
+        Var* v = new Var(string.substr(1,string.length()-2));
+        v->type='s';    
+        return new _Operation(v);
+    }
     if(str.size()==0){return new _Operation(0);}
     //Обрезка скобок
     while(true){
@@ -180,19 +184,14 @@ _Operation* Parse(const std::string& string){
         return operation;
     }
     else{
+        //std::cout<<"Parse: "<<string<<";"<<std::endl;
         return new _Operation(AutoVar(str));
     }
 
 }
 // Декодер(думаю, тут очевидно)
 Var* Decode(_Operation* tree){
-    //std::cerr<<"Decode: "<<tree->is_func<<" "<<tree->is_leaf<<" "<<((tree->is_func)?tree->function->name:((!(tree->is_func)&&!(tree->is_leaf))?tree->oper->oper:To_String(tree->constant)))<<std::endl;
     if(tree->is_leaf){
-        //std::cerr<<tree->constant->type<<std::endl;
-        // if(tree->constant->type=='s'){
-        //     std::string str = tree->constant->get_s();
-        //     if(str[0]=='"'&&str[str.length()-1]=='"') tree->constant = new Var(str.substr(1,str.length()-2));
-        // }
         return tree->constant;
     }
     else if(!(tree->is_leaf)){
@@ -210,14 +209,11 @@ Var* Decode(_Operation* tree){
         }
         else{
             std::vector<Var*> v1;
-            //std::cerr<<"Decode1: "<<tree->arguments.size()<<"; ";
             for(_Operation* v:tree->arguments){
                 //std::cerr<<"Call_";
                 v1.push_back(Decode(v));
             }
-            //std::cerr<<"Decode1: "<<tree->arguments.size()<<" "<<std::endl;
             Var* temp = tree->function->F(v1);
-            //std::cerr<<"Decode1: "<<tree->arguments.size()<<" "<<To_String(temp)<<std::endl;
             return temp;
             delete temp;
         }

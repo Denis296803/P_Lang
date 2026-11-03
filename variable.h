@@ -103,9 +103,6 @@ std::string To_String(long long int x){
     return a;
 }
 std::string To_String(std::string x){
-    for(Var* v : variables){
-        if(v->name==x){return To_String(v);}
-    }
     return x;
 }
 std::string To_String(Var* x){
@@ -155,7 +152,7 @@ long long int To_Int(long long int x){
 }
 long long int To_Int(std::string x){
     double a=0;
-    bool wasMinus=true;
+    bool wasMinus=false;
     for(int i=0;i<x.size();i++){
         if(x[i]=='-') wasMinus=true;
         else if(x[i]>='0'&&x[i]<='9'){
@@ -183,12 +180,19 @@ Var* GetVar(std::string a){
 }
 
 Var* AutoVar(std::string str){
-    
-    char type = Get_Type(str);
-    //std::cerr<<"AutoVar: "<<str<<std::endl;
-    if(type=='d') return new Var(To_Double(str));
-    else if(type=='i') return new Var(To_Int(str));
-    else if(type=='s') return new Var(To_String(str));
+    Var* a = GetVar(str);
+    //std::cout<<"AutoVar: "<<str<<" "<<To_String(str)<<" "<<a->name<<a->type<<" ";
+    if(a->name!=""){
+        std::cout<<std::endl;
+        return a;
+    }
+    else{
+        char type = Get_Type(str);
+        //std::cerr<<type<<";"<<std::endl;
+        if(type=='d') return new Var(To_Double(str));
+        else if(type=='i') return new Var(To_Int(str));
+        else if(type=='s') return new Var(To_String(str));
+    }
 }
 Var* AutoVar(Var* v){
     if(v->type=='s'){

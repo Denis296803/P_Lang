@@ -7,6 +7,7 @@
 
 
 int main(){
-    Decode(Parse("a=1"));
-    Decode(Parse("Console.Write(a)"));
+    Decode(Parse("a=1.25"));
+    Decode(Parse("b=1.25"));
+    Decode(Parse("Console.Write(a+b)"));
 }

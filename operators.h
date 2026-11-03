@@ -28,8 +28,7 @@ public:
     Var* F2(Var* a, Var* b) override
     {   
         if(a->type=='s'||b->type=='s'){
-            std::string tmp1 = To_String(b),tmp2 = To_String(a);
-            return new Var(tmp1+tmp2);
+            return new Var(To_String(a)+To_String(b));
         }
         return new Var(To_Double(a)+To_Double(b));
     }
