@@ -134,3 +134,20 @@ public:
         return b;
     }
 };
+class Equ : public Operator
+{
+public:
+    Equ()
+    {
+        oper     = "==";
+        priority = -2;
+        is_unary = false;
+    }
+    Var* F2(Var* a, Var* b) override
+    {
+        //std::cout<<To_String(a)<<" "<<To_String(b);
+        if(To_String(a)==To_String(b))
+            return new Var(true);
+        return new Var(false);
+    }
+};

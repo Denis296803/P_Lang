@@ -9,8 +9,9 @@
 
 
 
-std::vector<Operator*> operators = {new Add(),new Sub(),new Asg()};
+std::vector<Operator*> operators = {new Add(),new Sub(),new Asg(),new Equ()};
 std::vector<Function*> functions = {new Write()};
+std::vector<ExeFunction*> exeFunctions = {new If()};
 
 
 //* Парсер
@@ -37,14 +38,9 @@ public:
 };
 
 // Парсер(да, знаю, удивительно)
-_Operation* Parse(const std::string& string){
-    std::cout<<string<<std::endl;
+_Operation* _Parse(const std::string& string){
+    //std::cout<<string<<std::endl;
     std::string str = string;
-    if(string[0]=='"'&&string[string.length()-1]=='"'){
-        Var* v = new Var(string.substr(1,string.length()-2));
-        v->type='s';    
-        return new _Operation(v);
-    }
     if(str.size()==0){return new _Operation(0);}
     //Обрезка скобок
     while(true){
@@ -65,6 +61,11 @@ _Operation* Parse(const std::string& string){
         }
         else
             break;
+    }
+    if(string[0]=='"'&&string[string.length()-1]=='"'){
+        Var* v = new Var(string.substr(1,string.length()-2));
+        v->type='s';    
+        return new _Operation(v);
     }
     //Нахождение всех операторов
     std::vector<int> indexesOper,opers,depthsOper,funcs,indexesFunc,depthsFunc;
@@ -174,12 +175,12 @@ _Operation* Parse(const std::string& string){
                 vec1.push_back(str.substr(last,str.length()-last));
             }
             for(int i=0;i<vec1.size();i++){
-                vec2.push_back(Parse(vec1[i]));
+                vec2.push_back(_Parse(vec1[i]));
             }
 
         }
         if(bestDepthFunc>=bestDepthOper)
-            return new _Operation(Parse(str.substr(0,bestPositionOper)),Parse(str.substr(bestPositionOper+operators[bestIdOper]->oper.size())),operators[bestIdOper]);
+            return new _Operation(_Parse(str.substr(0,bestPositionOper)),_Parse(str.substr(bestPositionOper+operators[bestIdOper]->oper.size())),operators[bestIdOper]);
         _Operation* operation = new _Operation(functions[bestIdFunc],vec2);
         return operation;
     }
@@ -189,7 +190,7 @@ _Operation* Parse(const std::string& string){
 
 }
 // Декодер(думаю, тут очевидно)
-Var* Decode(_Operation* tree){
+Var* _Decode(_Operation* tree){
     //std::cout<<tree->is_func<<tree->is_leaf<<std::endl;
     if(tree->is_leaf){
         return tree->constant;
@@ -197,12 +198,12 @@ Var* Decode(_Operation* tree){
     else if(!(tree->is_leaf)){
         if(!(tree->is_func)){
             if(tree->oper->is_unary){
-                Var* a = tree->oper->F1(Decode(tree->a));
+                Var* a = tree->oper->F1(_Decode(tree->a));
                 return a;
                 delete a;
             }
             else{
-                Var* a=Decode(tree->a); Var* b=Decode(tree->b);
+                Var* a=_Decode(tree->a); Var* b=_Decode(tree->b);
                 return tree->oper->F2(a,b);
                 delete a,b;
             }
@@ -210,7 +211,7 @@ Var* Decode(_Operation* tree){
         else{
             std::vector<Var*> v1;
             for(_Operation* v:tree->arguments){
-                v1.push_back(Decode(v));
+                v1.push_back(_Decode(v));
             }
             Var* temp = tree->function->F(v1);
             return temp;
@@ -221,3 +222,52 @@ Var* Decode(_Operation* tree){
         return 0;
 }
 
+void Execute(std::vector<std::string> code){
+    for(int nStr=0;nStr<code.size();nStr++){
+        std::string string = code[nStr];
+        bool wasFound=false;
+        int c1=1,c2=0,ind=nStr;
+        for(int funcIndex=0;funcIndex<exeFunctions.size();funcIndex++){
+            for(int index=0;index+exeFunctions[funcIndex]->name.length()<code[nStr].length();index++){
+                if(string.substr(index,exeFunctions[funcIndex]->name.size())==exeFunctions[funcIndex]->name){
+                    for(int i1=std::min(nStr+1,(int)code.size());i1<code.size();i1++){
+                        for(int i2=0;i2<code[i1].length();i2++){
+                            if(code[i1][i2]=='"') c2++;
+                            else if(code[i1][i2]=='{'&&c2%2==0) c1++;
+                            else if(code[i1][i2]=='}'&&c2%2==0) c1--;
+                            if(c1==0) break;
+                        }
+                        if(c1==0){ind=i1;break;}
+                    }
+                    if(ind != nStr){
+                        wasFound=true;
+                        std::vector<std::string> v;
+                        for(int i=std::min(nStr+1,(int)code.size());i<ind;i++)
+                            v.push_back(code[i]);
+                        //Execute(v);
+                        std::vector<std::string> vec1;std::vector<Var*> vec2;
+                        int last=exeFunctions[funcIndex]->name.size(),c1=0,c2=0;
+                        for(int i=exeFunctions[funcIndex]->name.size();i<string.length()-1;i++){
+                            if(string[i]=='(') c1++;
+                            else if(string[i]==')') c1--;
+                            else if(string[i]=='"') c2++;
+                            else if(string[i]==','&&c2%2==0&&c1==0){vec1.push_back(string.substr(last,i-last));last=i;}
+                        }
+                        if(last<string.length()){
+                            vec1.push_back(string.substr(last,string.length()-last-1));
+                        }
+                        for(int i=0;i<vec1.size();i++){
+                            vec2.push_back(_Decode(_Parse(vec1[i])));
+                        }
+                        exeFunctions[funcIndex]->F(vec2,v);
+                        break;
+                    }
+
+                }
+            }
+            if(wasFound){nStr=ind+1;break;}
+        }
+        if(!wasFound)
+            _Decode(_Parse(string));
+    }
+}

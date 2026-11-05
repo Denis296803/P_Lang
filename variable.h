@@ -108,6 +108,7 @@ std::string To_String(long long int x){
     return a;
 }
 std::string To_String(std::string x){
+    if(x[0]=='"'&&x[x.length()-1]=='"') x = x.substr(1,x.length()-2);
     return x;
 }
 std::string To_String(Var* x){
@@ -188,9 +189,9 @@ std::string To_Pointer(Var* v){
 }
 
 Var* GetVar(std::string a){
-    std::cout<<variables.size()<<std::endl;
+    //std::cout<<variables.size()<<std::endl;
     for(Var* v : variables){
-        std::cout<<To_String(a)<<" "<<v->name<<std::endl;
+        //std::cout<<To_String(a)<<" "<<v->name<<std::endl;
         if(v->name==To_String(a)){
             return v;
         }
