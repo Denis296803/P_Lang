@@ -5,6 +5,8 @@
 #include <iostream>
 
 void Execute(std::vector<std::string> code);
+class _Operation;
+Var* _Decode(_Operation* tree);
 
 class Function{
     public:
@@ -25,15 +27,17 @@ class Write:public Function{
 class ExeFunction{
     public:
         std::string name;
-        virtual void F(std::vector<Var*> args,std::vector<std::string> code){return;}
+        virtual void F(std::vector<Var*> args,std::vector<_Operation*> code){return;}
 };
 
 class If:public ExeFunction{
     public:
         If(){name="if";}
-        void F(std::vector<Var*> args,std::vector<std::string> code) override{
-            if(args[0]->get_b()==true){ 
-                Execute(code);
+        void F(std::vector<Var*> args,std::vector<_Operation*> code) override{
+            if(args[0]->get_b()==true){
+                for(_Operation* o:code){
+                    _Decode(o);
+                }
             }
         }
 };

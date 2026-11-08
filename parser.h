@@ -24,13 +24,16 @@ public:
     Operator* oper;
     Var* constant;
     std::vector<_Operation*> arguments;
+    std::vector<_Operation*> code;
     Function* function;
-    bool is_leaf = false;
-    bool is_func = false;
-    _Operation(_Operation* par1,_Operation* par2,Operator* op){a=par1;b=par2;oper=op;is_leaf = false;is_func=false;}
-    _Operation(Var* c){constant = c;is_leaf = true;is_func=false;}
-    _Operation(Function* func,std::vector<_Operation*> args){function = func; arguments = args;is_leaf = false;is_func=true;}
-    ~_Operation(){delete a; 
+    ExeFunction* exeFunc;
+    bool is_leaf = false,is_func = false,func_exe=false;
+    _Operation(_Operation* par1,_Operation* par2,Operator* op){a=par1;b=par2;oper=op;is_leaf = false,is_func=false,func_exe=false;}
+    _Operation(Var* c){constant = c;is_leaf = true,is_func=false,func_exe=false;}
+    _Operation(Function* func,std::vector<_Operation*> args){function = func; arguments = args;is_leaf = false,is_func=true,func_exe=false;}
+    _Operation(ExeFunction* func,std::vector<_Operation*> args,std::vector<_Operation*> text){exeFunc = func; arguments = args;is_leaf = false,is_func=true,func_exe=true;}
+    ~_Operation(){
+        delete a; 
         delete b; 
         for (auto arg : arguments) delete arg;
         delete constant;
@@ -39,29 +42,34 @@ public:
 
 // Парсер(да, знаю, удивительно)
 _Operation* _Parse(const std::string& string){
-    //std::cout<<string<<std::endl;
+    //std::cout<<"Parse: "<<string<<";";
     std::string str = string;
     if(str.size()==0){return new _Operation(0);}
     //Обрезка скобок
-    while(true){
-        if(str[0]=='('&&str[str.size()-1]==')'){
-            std::string temp = str.substr(1,str.size()-2);
-            int c=0;
-            for(int i=0;i<temp.size();i++){
-                if(temp[i]=='(') c++;
-                else if(temp[i]==')'){
-                    c--;
-                    if(c<0) break;
+    while(str[0]==' ') str=str.substr(1,str.length()-1);
+    while(str[str.size()-1]==' ') str=str.substr(0,str.length()-1);
+    if(string.length()>1){
+        while(true){
+            if(str[0]=='('&&str[str.size()-1]==')'){
+                std::string temp = str.substr(1,str.size()-2);
+                int c=0;
+                for(int i=0;i<temp.size();i++){
+                    if(temp[i]=='(') c++;
+                    else if(temp[i]==')'){
+                        c--;
+                        if(c<0) break;
+                    }
                 }
+                if(c >= 0)
+                    str=temp;
+                else
+                    break;
             }
-            if(c >= 0)
-                str=temp;
             else
                 break;
         }
-        else
-            break;
     }
+    //std::cout<<string<<std::endl;
     if(string[0]=='"'&&string[string.length()-1]=='"'){
         Var* v = new Var(string.substr(1,string.length()-2));
         v->type='s';    
@@ -101,7 +109,7 @@ _Operation* _Parse(const std::string& string){
 
 
     for(int indexFunc=0;indexFunc<functions.size();indexFunc++){
-        for(int i=0;i+functions[indexFunc]->name.size()<=str.size();i++){
+        for(int i=0;i+functions[indexFunc]->name.size()<str.size();i++){
             if(str.substr(i,(functions[indexFunc]->name.size()))==functions[indexFunc]->name){
                 int c1=0,c2=0;
                 for(int j=0;j<i;j++){
@@ -193,10 +201,12 @@ _Operation* _Parse(const std::string& string){
 Var* _Decode(_Operation* tree){
     //std::cout<<tree->is_func<<tree->is_leaf<<std::endl;
     if(tree->is_leaf){
+        //std::cout<<"Decode: "<<tree->constant<<std::endl;
         return tree->constant;
     }
     else if(!(tree->is_leaf)){
         if(!(tree->is_func)){
+            //std::cout<<"Decode: "<<tree->oper->oper<<std::endl;
             if(tree->oper->is_unary){
                 Var* a = tree->oper->F1(_Decode(tree->a));
                 return a;
@@ -209,65 +219,152 @@ Var* _Decode(_Operation* tree){
             }
         }
         else{
-            std::vector<Var*> v1;
-            for(_Operation* v:tree->arguments){
-                v1.push_back(_Decode(v));
+            if(!(tree->func_exe)){
+                //std::cout<<"Decode: "<<tree->function->name<<std::endl;
+                std::vector<Var*> v1;
+                for(_Operation* v:tree->arguments){
+                    v1.push_back(_Decode(v));
+                }
+                Var* temp = tree->function->F(v1);
+                return temp;
+                delete temp;
             }
-            Var* temp = tree->function->F(v1);
-            return temp;
-            delete temp;
+            else{
+                //std::cout<<"Decode: "<<tree->exeFunc->name<<std::endl;
+                std::vector<Var*> v1;
+                for(_Operation* v:tree->arguments){
+                    v1.push_back(_Decode(v));
+                }
+                tree->exeFunc->F(v1,tree->code);
+            }
         }
     }
     else
         return 0;
 }
 
-void Execute(std::vector<std::string> code){
-    for(int nStr=0;nStr<code.size();nStr++){
-        std::string string = code[nStr];
-        bool wasFound=false;
-        int c1=1,c2=0,ind=nStr;
-        for(int funcIndex=0;funcIndex<exeFunctions.size();funcIndex++){
-            for(int index=0;index+exeFunctions[funcIndex]->name.length()<code[nStr].length();index++){
-                if(string.substr(index,exeFunctions[funcIndex]->name.size())==exeFunctions[funcIndex]->name){
-                    for(int i1=std::min(nStr+1,(int)code.size());i1<code.size();i1++){
-                        for(int i2=0;i2<code[i1].length();i2++){
-                            if(code[i1][i2]=='"') c2++;
-                            else if(code[i1][i2]=='{'&&c2%2==0) c1++;
-                            else if(code[i1][i2]=='}'&&c2%2==0) c1--;
-                            if(c1==0) break;
-                        }
-                        if(c1==0){ind=i1;break;}
-                    }
-                    if(ind != nStr){
-                        wasFound=true;
-                        std::vector<std::string> v;
-                        for(int i=std::min(nStr+1,(int)code.size());i<ind;i++)
-                            v.push_back(code[i]);
-                        //Execute(v);
-                        std::vector<std::string> vec1;std::vector<Var*> vec2;
-                        int last=exeFunctions[funcIndex]->name.size(),c1=0,c2=0;
-                        for(int i=exeFunctions[funcIndex]->name.size();i<string.length()-1;i++){
-                            if(string[i]=='(') c1++;
-                            else if(string[i]==')') c1--;
-                            else if(string[i]=='"') c2++;
-                            else if(string[i]==','&&c2%2==0&&c1==0){vec1.push_back(string.substr(last,i-last));last=i;}
-                        }
-                        if(last<string.length()){
-                            vec1.push_back(string.substr(last,string.length()-last-1));
-                        }
-                        for(int i=0;i<vec1.size();i++){
-                            vec2.push_back(_Decode(_Parse(vec1[i])));
-                        }
-                        exeFunctions[funcIndex]->F(vec2,v);
-                        break;
-                    }
+std::vector<_Operation*> ParseMega(std::vector<std::string> st);
 
+void Execute(std::vector<std::string> strings){
+    std::vector<_Operation*> v = ParseMega(strings);
+    //std::cout<<"Decode";
+    for(_Operation* o:v){
+        _Decode(o);
+    }
+}
+
+std::vector<_Operation*> _GetArgs(const std::string& string){
+    std::string str = string;
+    while(str[0]==' ') str=str.substr(1,str.length()-1);
+    while(str[str.size()-1]==' ') str=str.substr(0,str.length()-1);
+    while(true){
+        if(str[0]=='('&&str[str.size()-1]==')'){
+            std::string temp = str.substr(1,str.size()-2);
+            int c=0;
+            for(int i=0;i<temp.size();i++){
+                if(temp[i]=='(') c++;
+                else if(temp[i]==')'){
+                    c--;
+                    if(c<0) break;
                 }
             }
-            if(wasFound){nStr=ind+1;break;}
+            if(c >= 0)
+                str=temp;
+            else
+                break;
         }
-        if(!wasFound)
-            _Decode(_Parse(string));
+        else
+            break;
     }
+    std::vector<std::string> vec1;
+    std::vector<_Operation*> vec2;
+    int last=0,c1=0,c2=0;
+    for(int i=0;i<str.length()-1;i++){
+        if(str[i]=='(') c1++;
+        else if(str[i]==')') c1--;
+        else if(str[i]=='"') c2++;
+        else if(str[i]==','&&c2%2==0&&c1==0){vec1.push_back(str.substr(last,i-last));last=i;}
+    }
+    if(last<str.length()){
+        vec1.push_back(str.substr(last,str.length()-last));
+    }
+    for(int i=0;i<vec1.size();i++){
+        vec2.push_back(_Parse(vec1[i]));
+    }
+    return vec2;
+}
+
+std::vector<_Operation*> ParseMega(std::vector<std::string> strings){
+    bool was_found=false; int startIndex=-1,startIndexString=-1,endIndex=-1,endIndexString=-1,counterBrack=0,counterFancy=0,indexFunc=-1; ExeFunction* func=nullptr;
+    std::vector<_Operation*> out,args;
+    for(int i=0;i<strings.size();i++){
+        std::string string = strings[i];
+        //std::cout<<string<<std::endl;
+        if(string!=""){
+            if(!was_found){
+                for(ExeFunction* f:exeFunctions){
+                    for(int index=0;index+(int)f->name.length()<=string.size();index++){
+                        int counters[3] = {0,0,0};
+                        if(string.substr(index,f->name.length())==f->name&&counters[0]%2==0&&counters[1]==0&&counters[2]==0){
+                            was_found=true;
+                            indexFunc=i;
+                            int tempCounters[3] = {0,0,0};
+                            for(int a=i;a<strings.size();a++){
+                                for(int b=0;b<strings[a].size();b++){
+                                    if(strings[a][b]=='"') tempCounters[0]++;
+                                    else if(strings[a][b]=='{'&&tempCounters[0]%2==0&&tempCounters[1]==0&&tempCounters[2]==0){
+                                        startIndex=a;startIndexString=b;
+                                        counterBrack=1;
+                                        break;
+                                    }
+                                    else if(strings[a][b]=='('&&tempCounters[0]%2==0) tempCounters[1]++;
+                                    else if(strings[a][b]==')'&&tempCounters[0]%2==0) tempCounters[1]--;
+                                    else if(strings[a][b]=='['&&tempCounters[0]%2==0) tempCounters[2]++;
+                                    else if(strings[a][b]==']'&&tempCounters[0]%2==0) tempCounters[2]--;
+                                }
+                            }
+                            func=f;
+                            break;
+                        }
+                        else if(strings[i][index]=='('&&counters[0]%2==0) counters[1]++;
+                        else if(strings[i][index]==')'&&counters[0]%2==0) counters[1]--;
+                        else if(strings[i][index]=='['&&counters[0]%2==0) counters[2]++;
+                        else if(strings[i][index]==']'&&counters[0]%2==0) counters[2]--;
+                        else if(strings[i][index]=='"') counters[0]++;
+                    }
+                    if(func!=nullptr) break;
+                    if(!was_found) out.push_back(_Parse(string));
+                }
+            }
+            else{
+                for(int a=0;a<string.size();a++){
+                    if(string[a]=='"') counterFancy++;
+                    else if(string[a]=='{'&&counterFancy%2==0) counterBrack++;
+                    else if(string[a]=='}'&&counterFancy%2==0) counterBrack--;
+                    if(counterBrack==0){
+                        endIndex=i;
+                        endIndexString=a;
+
+                        std::vector<std::string> v1;
+                        int startArgs=-1,endArgs=-1;
+                        for(int j=0;j<strings[indexFunc].size();j++){
+                            if(strings[indexFunc][j]=='('&&startArgs==-1) startArgs=j;
+                            else if(strings[indexFunc][j]==')') endArgs=j;
+                        }
+                        args=_GetArgs(strings[indexFunc].substr(startArgs,endArgs-startArgs+1));
+                        v1.push_back(strings[startIndex].substr(startIndexString+1));
+                        for(int j=startIndex+1;j<endIndex;j++)
+                            v1.push_back(strings[j]);
+                        v1.push_back(strings[endIndex].substr(0,endIndexString));
+                        std::vector<_Operation*> v2 = ParseMega(v1);
+                        was_found=false;
+                        counterBrack=0;
+                        out.push_back(new _Operation(func,v2,args));
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    return out;
 }
