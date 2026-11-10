@@ -11,7 +11,7 @@
 
 std::vector<Operator*> operators = {new Add(),new Sub(),new Asg(),new Equ()};
 std::vector<Function*> functions = {new Write()};
-std::vector<ExeFunction*> exeFunctions = {new If()};
+std::vector<ExeFunction*> exeFunctions = {new If(),new For()};
 
 
 //* Парсер
@@ -31,7 +31,7 @@ public:
     _Operation(_Operation* par1,_Operation* par2,Operator* op){a=par1;b=par2;oper=op;is_leaf = false,is_func=false,func_exe=false;}
     _Operation(Var* c){constant = c;is_leaf = true,is_func=false,func_exe=false;}
     _Operation(Function* func,std::vector<_Operation*> args){function = func; arguments = args;is_leaf = false,is_func=true,func_exe=false;}
-    _Operation(ExeFunction* func,std::vector<_Operation*> args,std::vector<_Operation*> text){exeFunc = func; arguments = args;is_leaf = false,is_func=true,func_exe=true;}
+    _Operation(ExeFunction* func,std::vector<_Operation*> args,std::vector<_Operation*> text){exeFunc = func; arguments = args;code=text;is_leaf = false,is_func=true,func_exe=true;}
     ~_Operation(){
         delete a; 
         delete b; 
@@ -199,9 +199,7 @@ _Operation* _Parse(const std::string& string){
 }
 // Декодер(думаю, тут очевидно)
 Var* _Decode(_Operation* tree){
-    //std::cout<<tree->is_func<<tree->is_leaf<<std::endl;
     if(tree->is_leaf){
-        //std::cout<<"Decode: "<<tree->constant<<std::endl;
         return tree->constant;
     }
     else if(!(tree->is_leaf)){
@@ -230,17 +228,12 @@ Var* _Decode(_Operation* tree){
                 delete temp;
             }
             else{
-                //std::cout<<"Decode: "<<tree->exeFunc->name<<std::endl;
-                std::vector<Var*> v1;
-                for(_Operation* v:tree->arguments){
-                    v1.push_back(_Decode(v));
-                }
-                tree->exeFunc->F(v1,tree->code);
+                tree->exeFunc->F(tree->arguments,tree->code);
+                return nullptr;
             }
         }
     }
-    else
-        return 0;
+    return nullptr;
 }
 
 std::vector<_Operation*> ParseMega(std::vector<std::string> st);
@@ -249,6 +242,7 @@ void Execute(std::vector<std::string> strings){
     std::vector<_Operation*> v = ParseMega(strings);
     //std::cout<<"Decode";
     for(_Operation* o:v){
+        //std::cout<<To_String(_Decode(o))<<std::endl;
         _Decode(o);
     }
 }
@@ -311,17 +305,20 @@ std::vector<_Operation*> ParseMega(std::vector<std::string> strings){
                             int tempCounters[3] = {0,0,0};
                             for(int a=i;a<strings.size();a++){
                                 for(int b=0;b<strings[a].size();b++){
-                                    if(strings[a][b]=='"') tempCounters[0]++;
-                                    else if(strings[a][b]=='{'&&tempCounters[0]%2==0&&tempCounters[1]==0&&tempCounters[2]==0){
+                                    std::string str = strings[a];
+                                    char ch = strings[a][b];
+                                    if(ch=='"') tempCounters[0]++;
+                                    else if(ch=='{'&&tempCounters[0]%2==0&&tempCounters[1]==0&&tempCounters[2]==0){
                                         startIndex=a;startIndexString=b;
-                                        counterBrack=1;
+                                        counterBrack=(a==i)?(1):(0);
                                         break;
                                     }
-                                    else if(strings[a][b]=='('&&tempCounters[0]%2==0) tempCounters[1]++;
-                                    else if(strings[a][b]==')'&&tempCounters[0]%2==0) tempCounters[1]--;
-                                    else if(strings[a][b]=='['&&tempCounters[0]%2==0) tempCounters[2]++;
-                                    else if(strings[a][b]==']'&&tempCounters[0]%2==0) tempCounters[2]--;
+                                    else if(ch=='('&&tempCounters[0]%2==0) tempCounters[1]++;
+                                    else if(ch==')'&&tempCounters[0]%2==0) tempCounters[1]--;
+                                    else if(ch=='['&&tempCounters[0]%2==0) tempCounters[2]++;
+                                    else if(ch==']'&&tempCounters[0]%2==0) tempCounters[2]--;
                                 }
+                                if(startIndex!=-1&&startIndexString!=-1) break;
                             }
                             func=f;
                             break;
@@ -333,8 +330,8 @@ std::vector<_Operation*> ParseMega(std::vector<std::string> strings){
                         else if(strings[i][index]=='"') counters[0]++;
                     }
                     if(func!=nullptr) break;
-                    if(!was_found) out.push_back(_Parse(string));
                 }
+                if(!was_found) out.push_back(_Parse(string));
             }
             else{
                 for(int a=0;a<string.size();a++){
@@ -355,11 +352,11 @@ std::vector<_Operation*> ParseMega(std::vector<std::string> strings){
                         v1.push_back(strings[startIndex].substr(startIndexString+1));
                         for(int j=startIndex+1;j<endIndex;j++)
                             v1.push_back(strings[j]);
-                        v1.push_back(strings[endIndex].substr(0,endIndexString));
+                        v1.push_back(strings[endIndex].substr(0,endIndexString-1));
                         std::vector<_Operation*> v2 = ParseMega(v1);
                         was_found=false;
                         counterBrack=0;
-                        out.push_back(new _Operation(func,v2,args));
+                        out.push_back(new _Operation(func,args,v2));
                         break;
                     }
                 }

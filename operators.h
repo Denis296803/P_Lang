@@ -130,7 +130,8 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        SetVar(To_Pointer(a),b);
+        if(b->type=='p') b = GetVar(To_Pointer(b));
+        SetVar(To_Pointer(a),AutoVar(b));
         return b;
     }
 };

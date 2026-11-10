@@ -61,6 +61,7 @@ class Var{
 std::vector<Var*> variables;
 
 char Get_Type(std::string str){
+    if(str=="false"||str=="False"||str=="FALSE"||str=="True"||str=="TRUE"||str=="true") return 'b';
     if(str[0]=='"'&&str[str.length()-1]=='"') return 's';
     bool wasMinus=false,wasPoint=false;
     for(int i=0;i<str.length();i++){
@@ -117,6 +118,7 @@ std::string To_String(Var* x){
     if(x->type=='s') return To_String(x->get_s());
     if(x->type=='i') return To_String(x->get_i());
     if(x->type=='p') return To_String(x->get_p());
+    return "";
 }
 
 double To_Double(double x){
@@ -141,7 +143,10 @@ double To_Double(std::string x){
             }
 
         }
-        else return 69828.27982;
+        else{
+            std::cerr<<"Can't convert to <Double>\n";
+            throw 'e';
+        }
     }
     if(wasMinus) a=a*(-1);
     return a;
@@ -151,6 +156,7 @@ double To_Double(Var* x){
     else if(x->type=='i') return To_Double(x->get_i());
     else if(x->type=='s') return To_Double(x->get_s());
     else if(x->type=='p') return To_Double(GetVar(x->get_p()));
+    return 0;
 }
 
 long long int To_Int(double x){
@@ -167,7 +173,10 @@ long long int To_Int(std::string x){
         else if(x[i]>='0'&&x[i]<='9'){
             a=a*10+(int)(x[i]-'0');
         }
-        else return 6982827982;
+        else{
+            std::cerr<<"Can't convert to <Int>\n";
+            throw 'e';
+        }
     }
     if(wasMinus) a=a*(-1);
     return a;
@@ -178,6 +187,7 @@ long long int To_Int(Var* x){
     else if(x->type=='i') return To_Int(x->get_i());
     else if(x->type=='s') return To_Int(x->get_s());
     else if(x->type=='p') return To_Int(GetVar(x->get_p()));
+    return 0ll;
 }
 
 std::string To_Pointer(std::string str){
@@ -192,21 +202,53 @@ Var* GetVar(std::string a){
     //std::cout<<variables.size()<<std::endl;
     for(Var* v : variables){
         //std::cout<<To_String(a)<<" "<<v->name<<std::endl;
-        if(v->name==To_String(a)){
+        if(v->name==a){
             return v;
         }
     }
-    std::cout<<"No such var."<<std::endl;
-    throw 'f';
+    std::cerr<<"Var with name \""+a+"\" doesn't exist"<<std::endl;
+    throw 'e';
+}
+
+double GetDouble(std::string a){
+    for(Var* v : variables){
+        //std::cout<<To_String(a)<<" "<<v->name<<std::endl;
+        if(v->name==a){
+            return To_Double(v);
+        }
+    }
+    std::cerr<<"Var with name \""+a+"\" doesn't exist"<<std::endl;
+    throw 'e';
+}
+std::string GetString(std::string a){
+    for(Var* v : variables){
+        //std::cout<<To_String(a)<<" "<<v->name<<std::endl;
+        if(v->name==a){
+            return To_String(v);
+        }
+    }
+    std::cerr<<"Var with name \""+a+"\" doesn't exist"<<std::endl;
+    throw 'e';
+}
+long long int GetInt(std::string a){
+    for(Var* v : variables){
+        //std::cout<<To_String(a)<<" "<<v->name<<std::endl;
+        if(v->name==a){
+            return To_Int(v);
+        }
+    }
+    std::cerr<<"Var with name \""+a+"\" doesn't exist"<<std::endl;
+    throw 'e';
 }
 
 Var* SetVar(std::string a,Var* b){
     for(Var* v : variables){
-            if(v->name==a){
-                v->type=b->type;
-                v->v=b->v;
-                return b;
-            }
+        if(v->name==a){
+            v->type=b->type;
+            v->v.resize(b->v.size());
+            std::memcpy(v->v.data(),b->v.data(),b->v.size());
+            return b;
+        }
     }
     b->name=To_String(a);
     variables.push_back(b);
@@ -219,6 +261,7 @@ Var* AutoVar(std::string str){
     else if(type=='i') return new Var(To_Int(str));
     else if(type=='s') return new Var(To_String(str));
     else if(type=='p') return new Var(To_Pointer(str));
+    return nullptr;
 }
 Var* AutoVar(Var* v){
     if(v->type=='s'){
