@@ -27,9 +27,7 @@ public:
         is_unary = false;
     }
     Var* F2(Var* a, Var* b) override
-    {   
-        if(a->type=='p') a=GetVar(To_Pointer(a));
-        if(b->type=='p') b=GetVar(To_Pointer(b));
+    {
         if(a->type=='s'||b->type=='s'){
             return new Var(To_String(a)+To_String(b));
         }

@@ -18,8 +18,7 @@ class Write:public Function{
     public:
         Write(){name = "Console.Write";}
         Var* F(std::vector<Var*> args) override{
-            if(args[0]->type=='p') std::cout<<To_String(GetVar(To_Pointer(args[0])));
-            else std::cout<<To_String(args[0]);
+            std::cout<<To_String(GetVar(args[0]));
             return new Var(0ll);
         }
 };

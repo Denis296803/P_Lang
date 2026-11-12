@@ -59,8 +59,10 @@ class Var{
 };
 
 std::vector<Var*> variables;
+std::string To_String(Var* v);
 
 char Get_Type(std::string str){
+    std::cout<<str<<"\n";
     if(str=="false"||str=="False"||str=="FALSE"||str=="True"||str=="TRUE"||str=="true") return 'b';
     if(str[0]=='"'&&str[str.length()-1]=='"') return 's';
     bool wasMinus=false,wasPoint=false;
@@ -78,6 +80,11 @@ char Get_Type(std::string str){
     if(wasPoint) return 'd';
     else return 'i';
 }
+
+char Get_Type(Var* v){
+    return Get_Type(To_String(v));
+}
+
 Var* GetVar(std::string);
 Var* AutoVar(std::string);
 
@@ -174,7 +181,7 @@ long long int To_Int(std::string x){
             a=a*10+(int)(x[i]-'0');
         }
         else{
-            std::cerr<<"Can't convert to <Int>\n";
+            std::cerr<<"Can't convert \""+x+"\"to <Int>\n";
             throw 'e';
         }
     }
@@ -197,17 +204,43 @@ std::string To_Pointer(std::string str){
 std::string To_Pointer(Var* v){
     return To_Pointer(To_String(v));
 }
+bool To_Bool(std::string a){
+	if(a=="True"||a=="TRUE"||a=="true") return true;
+	else if(a=="False"||a=="FALSE"||a=="false") return false;
+	std::cerr<<"Can't convert \""+a+"\" to <Bool>\n";
+	throw 'e';
+}
+bool To_Bool(long long int a){
+	if(a==0) return false;
+	return true;
+}
+bool To_Bool(double a){
+	if(a==0) return false;
+	return true;
+}
+bool To_Bool(Var* v){
+	char type = Get_Type(v);
+	if(type=='b') return v->get_b();
+	if(type=='i') return To_Bool(v->get_i());
+	if(type=='d') return To_Bool(v->get_d());
+	if(type=='s') return To_Bool(v->get_s());
+	if(type=='p') return To_Bool(GetVar(v->get_p()));
+}
 
 Var* GetVar(std::string a){
-    //std::cout<<variables.size()<<std::endl;
+    GetVars();
     for(Var* v : variables){
-        //std::cout<<To_String(a)<<" "<<v->name<<std::endl;
         if(v->name==a){
             return v;
         }
     }
     std::cerr<<"Var with name \""+a+"\" doesn't exist"<<std::endl;
     throw 'e';
+}
+Var* GetVar(Var* v){
+    //std::cout<<v->name<<"("<<v->type<<") = "<<To_String(v)<<"\n";
+	if(v->type=='p') return GetVar(v->get_p());
+	return v;
 }
 
 double GetDouble(std::string a){

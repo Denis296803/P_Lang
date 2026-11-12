@@ -70,8 +70,8 @@ _Operation* _Parse(const std::string& string){
         }
     }
     //std::cout<<string<<std::endl;
-    if(string[0]=='"'&&string[string.length()-1]=='"'){
-        Var* v = new Var(string.substr(1,string.length()-2));
+    if(str[0]=='"'&&str[str.length()-1]=='"'){
+        Var* v = new Var(str.substr(1,str.length()-2));
         v->type='s';    
         return new _Operation(v);
     }
@@ -206,12 +206,12 @@ Var* _Decode(_Operation* tree){
         if(!(tree->is_func)){
             //std::cout<<"Decode: "<<tree->oper->oper<<std::endl;
             if(tree->oper->is_unary){
-                Var* a = tree->oper->F1(_Decode(tree->a));
+                Var* a = tree->oper->F1(GetVar(_Decode(tree->a)));
                 return a;
                 delete a;
             }
             else{
-                Var* a=_Decode(tree->a); Var* b=_Decode(tree->b);
+                Var* a=GetVar(_Decode(tree->a)); Var* b=GetVar(_Decode(tree->b));
                 return tree->oper->F2(a,b);
                 delete a,b;
             }
@@ -221,7 +221,7 @@ Var* _Decode(_Operation* tree){
                 //std::cout<<"Decode: "<<tree->function->name<<std::endl;
                 std::vector<Var*> v1;
                 for(_Operation* v:tree->arguments){
-                    v1.push_back(_Decode(v));
+                    v1.push_back(GetVar(_Decode(v)));
                 }
                 Var* temp = tree->function->F(v1);
                 return temp;
@@ -241,6 +241,7 @@ std::vector<_Operation*> ParseMega(std::vector<std::string> st);
 void Execute(std::vector<std::string> strings){
     std::vector<_Operation*> v = ParseMega(strings);
     //std::cout<<"Decode";
+    GetVars();
     for(_Operation* o:v){
         //std::cout<<To_String(_Decode(o))<<std::endl;
         _Decode(o);
