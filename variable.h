@@ -228,7 +228,6 @@ bool To_Bool(Var* v){
 }
 
 Var* GetVar(std::string a){
-    GetVars();
     for(Var* v : variables){
         if(v->name==a){
             return v;
