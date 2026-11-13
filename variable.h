@@ -6,8 +6,6 @@
 #include <iostream>
 #include <algorithm>
 
-
-
 class Var{
     public:
         char type;
@@ -59,10 +57,10 @@ class Var{
 };
 
 std::vector<Var*> variables;
+Var* GetConstant(std::string a);
 std::string To_String(Var* v);
-
 char Get_Type(std::string str){
-    std::cout<<str<<"\n";
+    //std::cout<<str<<"\n";
     if(str=="false"||str=="False"||str=="FALSE"||str=="True"||str=="TRUE"||str=="true") return 'b';
     if(str[0]=='"'&&str[str.length()-1]=='"') return 's';
     bool wasMinus=false,wasPoint=false;
@@ -119,12 +117,17 @@ std::string To_String(std::string x){
     if(x[0]=='"'&&x[x.length()-1]=='"') x = x.substr(1,x.length()-2);
     return x;
 }
+std::string To_String(bool x){
+    if(!x) return "false";
+    return "true";
+}
 std::string To_String(Var* x){
     //std::cout<<x->get_p();
     if(x->type=='d') return To_String(x->get_d());
     if(x->type=='s') return To_String(x->get_s());
     if(x->type=='i') return To_String(x->get_i());
     if(x->type=='p') return To_String(x->get_p());
+    if(x->type=='b') return To_String(x->get_b());
     return "";
 }
 
@@ -194,7 +197,8 @@ long long int To_Int(Var* x){
     else if(x->type=='i') return To_Int(x->get_i());
     else if(x->type=='s') return To_Int(x->get_s());
     else if(x->type=='p') return To_Int(GetVar(x->get_p()));
-    return 0ll;
+    std::cerr<<"Can't convert \""+(x->type)+(std::string)"\"to <Int>\n";
+    throw 'e';
 }
 
 std::string To_Pointer(std::string str){
@@ -225,9 +229,13 @@ bool To_Bool(Var* v){
 	if(type=='d') return To_Bool(v->get_d());
 	if(type=='s') return To_Bool(v->get_s());
 	if(type=='p') return To_Bool(GetVar(v->get_p()));
+    std::cerr<<"Can't convert \""+(v->type)+(std::string)"\"to <Bool>\n";
+    throw 'e';
 }
 
 Var* GetVar(std::string a){
+    Var* v = GetConstant(a);
+    if(v!=nullptr) return v;
     for(Var* v : variables){
         if(v->name==a){
             return v;
@@ -293,8 +301,10 @@ Var* AutoVar(std::string str){
     else if(type=='i') return new Var(To_Int(str));
     else if(type=='s') return new Var(To_String(str));
     else if(type=='p') return new Var(To_Pointer(str));
+    else if(type=='b') return new Var(To_Bool(str));
     return nullptr;
 }
+
 Var* AutoVar(Var* v){
     if(v->type=='s'){
         return AutoVar(v->get_s());

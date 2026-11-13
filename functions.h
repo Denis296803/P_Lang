@@ -22,6 +22,15 @@ class Write:public Function{
             return new Var(0ll);
         }
 };
+class Read:public Function{
+	public:
+		Read(){name="Console.Read";}
+		Var* F(std::vector<Var*> args) override{
+			std::string s;
+			std::getline(std::cin,s);
+			return new Var(s);
+		}
+};
 
 class ExeFunction{
     public:
@@ -61,3 +70,5 @@ class For:public ExeFunction{
             }
         }
 };
+std::vector<Function*> functions = {new Write()};
+std::vector<ExeFunction*> exeFunctions = {new If(),new For()};

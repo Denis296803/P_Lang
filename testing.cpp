@@ -12,5 +12,6 @@ int main(){
     // };
 
     
-    Execute({"Console.Write(\"Hello world!\")"});
+    Execute({"Console.Write(\"Hello world!\n\")"});
+    Execute({"for(10){","Console.Write(maybe)","Console.Write(\"\n\")","}"});
 }

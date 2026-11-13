@@ -123,7 +123,7 @@ public:
     Asg()
     {
         oper     = "=";
-        priority = -1;
+        priority = -2;
         is_unary = false;
     }
     Var* F2(Var* a, Var* b) override
@@ -139,7 +139,7 @@ public:
     Equ()
     {
         oper     = "==";
-        priority = -2;
+        priority = -1;
         is_unary = false;
     }
     Var* F2(Var* a, Var* b) override
@@ -150,3 +150,91 @@ public:
         return new Var(false);
     }
 };
+class More : public Operator
+{
+public:
+	More()
+	{
+		oper = ">";
+		priority = -1;
+		is_unary = false;
+	}
+	Var* F2(Var* a, Var* b) override
+	{
+		a = GetVar(a); b = GetVar(b);
+		if(To_Double(a) > To_Double(b))
+			return new Var(true);
+		return new Var(false);
+	}
+};
+class MoreE : public Operator
+{
+public:
+	MoreE()
+	{
+		oper = ">=";
+		priority = -1;
+		is_unary = false;
+	}
+	Var* F2(Var* a, Var* b) override
+	{
+		a = GetVar(a); b = GetVar(b);
+		if(To_Double(a) >= To_Double(b))
+			return new Var(true);
+		return new Var(false);
+	}
+};
+class Less : public Operator
+{
+public:
+	Less()
+	{
+		oper = "<";
+		priority = -1;
+		is_unary = false;
+	}
+	Var* F2(Var* a, Var* b) override
+	{
+		a = GetVar(a); b = GetVar(b);
+		if(To_Double(a) < To_Double(b))
+			return new Var(true);
+		return new Var(false);
+	}
+};
+class LessE : public Operator
+{
+public:
+	LessE()
+	{
+		oper = "<=";
+		priority = -1;
+		is_unary = false;
+	}
+	Var* F2(Var* a, Var* b) override
+	{
+		a = GetVar(a); b = GetVar(b);
+		if(To_Double(a) <= To_Double(b))
+			return new Var(true);
+		return new Var(false);
+	}
+};
+class AddTo : public Operator
+{
+public:
+	AddTo()
+	{
+		oper = "+=";
+		priority = -2;
+		is_unary = false;
+	}
+	Var* F2(Var* a, Var* b) override
+	{
+		Var* copy_a = GetVar(a); b = GetVar(b);
+		SetVar(To_Pointer(a),new Var(To_Double(b)+To_Double(copy_a)));
+		b = new Var(To_Double(b)+To_Double(copy_a));
+		delete copy_a;
+		return b;
+	}
+};
+
+std::vector<Operator*> operators = {new Add(),new Sub(),new Asg(),new Equ()};

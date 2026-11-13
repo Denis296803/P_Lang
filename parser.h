@@ -6,13 +6,7 @@
 #include "operators.h"
 #include "variable.h"
 #include "functions.h"
-
-
-
-std::vector<Operator*> operators = {new Add(),new Sub(),new Asg(),new Equ()};
-std::vector<Function*> functions = {new Write()};
-std::vector<ExeFunction*> exeFunctions = {new If(),new For()};
-
+#include "constants.h"
 
 //* Парсер
 
@@ -206,26 +200,19 @@ Var* _Decode(_Operation* tree){
         if(!(tree->is_func)){
             //std::cout<<"Decode: "<<tree->oper->oper<<std::endl;
             if(tree->oper->is_unary){
-                Var* a = tree->oper->F1(GetVar(_Decode(tree->a)));
-                return a;
-                delete a;
+                return tree->oper->F1(GetVar(_Decode(tree->a)));;
             }
             else{
-                Var* a=GetVar(_Decode(tree->a)); Var* b=GetVar(_Decode(tree->b));
-                return tree->oper->F2(a,b);
-                delete a,b;
+                return tree->oper->F2(GetVar(_Decode(tree->a)),GetVar(_Decode(tree->b)));
             }
         }
         else{
             if(!(tree->func_exe)){
-                //std::cout<<"Decode: "<<tree->function->name<<std::endl;
                 std::vector<Var*> v1;
                 for(_Operation* v:tree->arguments){
                     v1.push_back(GetVar(_Decode(v)));
                 }
-                Var* temp = tree->function->F(v1);
-                return temp;
-                delete temp;
+                return tree->function->F(v1);
             }
             else{
                 tree->exeFunc->F(tree->arguments,tree->code);
@@ -241,7 +228,6 @@ std::vector<_Operation*> ParseMega(std::vector<std::string> st);
 void Execute(std::vector<std::string> strings){
     std::vector<_Operation*> v = ParseMega(strings);
     //std::cout<<"Decode";
-    GetVars();
     for(_Operation* o:v){
         //std::cout<<To_String(_Decode(o))<<std::endl;
         _Decode(o);
