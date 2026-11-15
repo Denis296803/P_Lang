@@ -31,6 +31,30 @@ class Read:public Function{
 			return new Var(s);
 		}
 };
+class Str:public Function{
+	public:
+		Str(){name="Str";}
+		Var* F(std::vector<Var*> args) override{
+			return new Var(To_String(args[0]));
+		}
+};
+
+class Int:public Function{
+	public:
+		Int(){name="Int";}
+		Var* F(std::vector<Var*> args) override{
+			return new Var(To_Int(args[0]));
+		}
+};
+
+class Double:public Function{
+	public:
+		Double(){name="Double";}
+		Var* F(std::vector<Var*> args) override{
+			return new Var(To_Double(args[0]));
+		}
+};
+
 
 class ExeFunction{
     public:
@@ -70,5 +94,29 @@ class For:public ExeFunction{
             }
         }
 };
-std::vector<Function*> functions = {new Write()};
+
+class TypeFunction{
+    public:
+        std::string name;
+        virtual Var* F(std::vector<Var*> args){return nullptr;}
+};
+class To_N:public TypeFunction{
+    public:
+        To_N(){name="to_n";}
+        Var* F(std::vector<Var*> args) override{
+            return new Var(To_String(args[0])+"\n");
+        }
+};
+class Push : public TypeFunction{
+    public:
+        Push(){name="push";}
+        Var* F(std::vector<Var*> args) override{
+            args[0]->a.push_back(args[1]);
+            SetVar(args[0]->name,args[0]);
+            return args[0];
+        }
+};
+
+std::vector<Function*> functions = {new Write(),new Read(),new Str(),new Int(),new Double()};
 std::vector<ExeFunction*> exeFunctions = {new If(),new For()};
+std::vector<TypeFunction*> typeFunctions = {new To_N(),new Push()};

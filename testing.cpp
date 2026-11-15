@@ -12,6 +12,7 @@ int main(){
     // };
 
     
-    Execute({"Console.Write(\"Hello world!\n\")"});
-    Execute({"for(10){","Console.Write(maybe)","Console.Write(\"\n\")","}"});
+    // Execute({"Console.Write(\"Hello world!\n\")"});
+    // Execute({"a=Int(Console.Read())","for(10){","a=a+1","Console.Write(a+\"jsafasf\")","}"});
+    Execute({"a = [1,2,3,4,5]","Console.Write(\"n\".to_n())","a.push(\"a\")","Console.Write(a)"});
 }

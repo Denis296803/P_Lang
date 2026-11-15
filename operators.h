@@ -28,9 +28,10 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        if(a->type=='s'||b->type=='s'){
-            return new Var(To_String(a)+To_String(b));
-        }
+        a = GetVar(a); b = GetVar(b);
+        //std::cout<<"Operator: "<<To_String(a)+To_String(b)<<"\n";
+        
+        if(a->type=='s'||b->type=='s') return new Var(To_String(a)+To_String(b));
         return new Var(To_Double(a)+To_Double(b));
     }
 };
@@ -45,8 +46,7 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        if(a->type=='p') a=GetVar(To_Pointer(a));
-        if(b->type=='p') b=GetVar(To_Pointer(b));
+        a = GetVar(a);b=GetVar(b);
         return new Var(To_Double(a)-To_Double(b));
     }
 };
@@ -61,8 +61,7 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        if(a->type=='p') a=GetVar(To_Pointer(a));
-        if(b->type=='p') b=GetVar(To_Pointer(b));
+        a = GetVar(a);b=GetVar(b);
         return new Var(To_Double(a)*To_Double(b));
     }
 };
@@ -77,8 +76,7 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        if(a->type=='p') a=GetVar(To_Pointer(a));
-        if(b->type=='p') b=GetVar(To_Pointer(b));
+        a = GetVar(a);b=GetVar(b);
         return new Var(To_Double(a)/To_Double(b));
     }
 };
@@ -93,8 +91,7 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        if(a->type=='p') a=GetVar(To_Pointer(a));
-        if(b->type=='p') b=GetVar(To_Pointer(b));
+        a = GetVar(a);b=GetVar(b);
         return new Var(To_Int(a)%To_Int(b));
     }
 };
@@ -109,8 +106,7 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        if(a->type=='p') a=GetVar(To_Pointer(a));
-        if(b->type=='p') b=GetVar(To_Pointer(b));
+        a = GetVar(a);b=GetVar(b);
         double temp1 = To_Double(a),out=1; int temp2=To_Int(b);
         for(int i=0;i<temp2;i++)
             out=out*temp1;
@@ -128,8 +124,7 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        if(b->type=='p') b = GetVar(To_Pointer(b));
-        SetVar(To_Pointer(a),AutoVar(b));
+        SetVar(To_Pointer(a),GetVar(b));
         return b;
     }
 };
@@ -144,7 +139,7 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        //std::cout<<To_String(a)<<" "<<To_String(b);
+        a = GetVar(a);b=GetVar(b);
         if(To_String(a)==To_String(b))
             return new Var(true);
         return new Var(false);

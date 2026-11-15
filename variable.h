@@ -9,8 +9,9 @@
 class Var{
     public:
         char type;
-        std::vector<uint8_t> v;
+        std::vector<uint8_t> v={};
         std::string name="";
+        std::vector<Var*> a={};
         Var(long long int a){
             v.resize(8);
             std::memcpy(v.data(), &a, 8);
@@ -32,8 +33,11 @@ class Var{
             for(int i=0;i<a.length();i++){
                 v[i]=a[i];
             }
-            if(a[0]=='"'&&a[a.length()-1]=='"') type='s';
-            else type='p';
+            type = 's';
+        }
+        Var(std::vector<Var*> v){
+            a = v;
+            type='a';
         }
         long long int get_i(){
             long long int in;
@@ -48,6 +52,10 @@ class Var{
         bool get_b(){
             return v[0]==255;
         }
+        std::vector<Var*> get_a(){
+            return a;
+        }
+
         std::string get_s(){
             return std::string(v.begin(),v.end());
         }
@@ -121,6 +129,13 @@ std::string To_String(bool x){
     if(!x) return "false";
     return "true";
 }
+std::string To_String(std::vector<Var*> a){
+    std::string s = "[";
+    for(Var* v:a)
+        s=s+To_String(v)+',';
+    if(a.size()!=0) s = s.substr(0,s.length()-1);
+    return s+']';
+}
 std::string To_String(Var* x){
     //std::cout<<x->get_p();
     if(x->type=='d') return To_String(x->get_d());
@@ -128,6 +143,7 @@ std::string To_String(Var* x){
     if(x->type=='i') return To_String(x->get_i());
     if(x->type=='p') return To_String(x->get_p());
     if(x->type=='b') return To_String(x->get_b());
+    if(x->type=='a') return To_String(x->get_a());
     return "";
 }
 
@@ -300,7 +316,7 @@ Var* AutoVar(std::string str){
     if(type=='d') return new Var(To_Double(str));
     else if(type=='i') return new Var(To_Int(str));
     else if(type=='s') return new Var(To_String(str));
-    else if(type=='p') return new Var(To_Pointer(str));
+    else if(type=='p'){Var* v =  new Var(To_Pointer(str));v->type='p';return v;}
     else if(type=='b') return new Var(To_Bool(str));
     return nullptr;
 }

@@ -21,10 +21,13 @@ public:
     std::vector<_Operation*> code;
     Function* function;
     ExeFunction* exeFunc;
-    bool is_leaf = false,is_func = false,func_exe=false;
+    TypeFunction* typefunc;
+    bool is_leaf = false,is_func = false,func_exe=false,is_array=false,func_type=false;
     _Operation(_Operation* par1,_Operation* par2,Operator* op){a=par1;b=par2;oper=op;is_leaf = false,is_func=false,func_exe=false;}
-    _Operation(Var* c){constant = c;is_leaf = true,is_func=false,func_exe=false;}
-    _Operation(Function* func,std::vector<_Operation*> args){function = func; arguments = args;is_leaf = false,is_func=true,func_exe=false;}
+    _Operation(Var* c){constant = c;is_leaf = true,is_func=false,func_exe=false;is_array=false;func_type=false;}
+    _Operation(std::vector<_Operation*> op){code=op;is_leaf=true,is_array=true;is_func=false;func_exe=false;func_type=false;}
+    _Operation(Function* func,std::vector<_Operation*> args){function = func; arguments = args;is_leaf = false,is_func=true,func_exe=false;func_type=false;}
+    _Operation(TypeFunction* func,std::vector<_Operation*> args){typefunc=func,arguments=args,is_leaf=false;is_func=true;func_exe=false;func_type=true;}
     _Operation(ExeFunction* func,std::vector<_Operation*> args,std::vector<_Operation*> text){exeFunc = func; arguments = args;code=text;is_leaf = false,is_func=true,func_exe=true;}
     ~_Operation(){
         delete a; 
@@ -36,12 +39,11 @@ public:
 
 // Парсер(да, знаю, удивительно)
 _Operation* _Parse(const std::string& string){
-    //std::cout<<"Parse: "<<string<<";";
+    //std::cout<<"Parse: "<<string<<"\n";
     std::string str = string;
-    if(str.size()==0){return new _Operation(0);}
     //Обрезка скобок
-    while(str[0]==' ') str=str.substr(1,str.length()-1);
-    while(str[str.size()-1]==' ') str=str.substr(0,str.length()-1);
+    while(str.size()>0&&str[0]==' ') str=str.substr(1,str.length()-1);
+    while(str.size()>0&&str[str.size()-1]==' ') str=str.substr(0,str.length()-1);
     if(string.length()>1){
         while(true){
             if(str[0]=='('&&str[str.size()-1]==')'){
@@ -63,6 +65,9 @@ _Operation* _Parse(const std::string& string){
                 break;
         }
     }
+    while(str.size()>0&&str[0]==' ') str=str.substr(1,str.length()-1);
+    while(str.size()>0&&str[str.size()-1]==' ') str=str.substr(0,str.length()-1);
+    if(str.size()==0){return new _Operation(new Var(""));}
     //std::cout<<string<<std::endl;
     if(str[0]=='"'&&str[str.length()-1]=='"'){
         Var* v = new Var(str.substr(1,str.length()-2));
@@ -102,6 +107,8 @@ _Operation* _Parse(const std::string& string){
     }
 
 
+
+
     for(int indexFunc=0;indexFunc<functions.size();indexFunc++){
         for(int i=0;i+functions[indexFunc]->name.size()<str.size();i++){
             if(str.substr(i,(functions[indexFunc]->name.size()))==functions[indexFunc]->name){
@@ -116,25 +123,84 @@ _Operation* _Parse(const std::string& string){
         }
     }
 
+    // for(int indexFunc1=0;indexFunc1<funcs.size();indexFunc1++){
+    //     bool was_found=false;
+    //     for(int indexFunc2=0;indexFunc2<funcs.size();indexFunc2++){
+    //         if(indexFunc1!=indexFunc2&&(indexesFunc[indexFunc1]+functions[funcs[indexFunc1]]->name.length()>indexesFunc[indexFunc2]&&indexesFunc[indexFunc1]<indexesFunc[indexFunc2]||indexesFunc[indexFunc2]+functions[funcs[indexFunc2]]->name.length()>indexesFunc[indexFunc1]&&indexesFunc[indexFunc2]<indexesFunc[indexFunc1])&&functions[funcs[indexFunc1]]->name.length()<functions[funcs[indexFunc2]]->name.length()){
+    //             was_found=true;
+    //             break;
+    //         }
+    //     }
+    //     if(!was_found){
+    //         indexesFuncFinal.push_back(indexesFunc[indexFunc1]);
+    //         depthsFuncFinal.push_back(depthsFunc[indexFunc1]);
+    //         funcsFinal.push_back(funcs[indexFunc1]);
+    //     }
+    // }
     for(int indexFunc1=0;indexFunc1<funcs.size();indexFunc1++){
-        bool was_found=false;
-        for(int indexFunc2=0;indexFunc2<funcs.size();indexFunc2++){
-            if(indexFunc1!=indexFunc2&&(indexesFunc[indexFunc1]+functions[funcs[indexFunc1]]->name.length()>indexesFunc[indexFunc2]&&indexesFunc[indexFunc1]<indexesFunc[indexFunc2]||indexesFunc[indexFunc2]+functions[funcs[indexFunc2]]->name.length()>indexesFunc[indexFunc1]&&indexesFunc[indexFunc2]<indexesFunc[indexFunc1])&&functions[funcs[indexFunc1]]->name.length()<functions[funcs[indexFunc2]]->name.length()){
-                was_found=true;
-                break;
-            }
-        }
-        if(!was_found){
+        if(str[indexesFunc[indexFunc1]+functions[funcs[indexFunc1]]->name.length()]=='('){
             indexesFuncFinal.push_back(indexesFunc[indexFunc1]);
             depthsFuncFinal.push_back(depthsFunc[indexFunc1]);
             funcsFinal.push_back(funcs[indexFunc1]);
         }
     }
 
-    if(indexesOperFinal.size()>0||indexesFuncFinal.size()>0){
+
+
+    std::vector<int> typeFuncIndex,typeFuncDepth,typeFunc;
+    for(int indexTF=0;indexTF<typeFunctions.size();indexTF++){
+        for(int i=0;i+typeFunctions[indexTF]->name.size()<=str.size();i++){
+            if(str.substr(i,(typeFunctions[indexTF]->name.size()))==typeFunctions[indexTF]->name){
+                int c1=0,c2=0;
+                for(int j=0;j<i;j++){
+                    if(str[j]=='(') c1++;
+                    else if(str[j]==')') c1--;
+                    else if(str[j]=='"') c2++;
+                }
+                if(c2%2==0){typeFuncIndex.push_back(i);typeFunc.push_back(indexTF); typeFuncDepth.push_back(c1);}
+            }
+        }
+    }
+
+
+
+    if(str[0]=='['&&str[str.length()-1]==']'){
+        int counterBrack = 0,counterF = 0;
+        for(int i=0;i<str.length();i++){
+            if(str[i]=='"') counterF++;
+            else if(str[i]=='['&&counterF%2==0) counterBrack++;
+            else if(str[i]==']'&&counterF%2==0) counterBrack--;
+            if(counterBrack<0){break;} 
+        }
+        if(counterBrack!=0){
+            std::cerr<<"Wrong brackets' position.";
+            throw 'f';
+        }
+        std::vector<std::string> vec1;
+        std::vector<_Operation*> vec2;
+        int last=1,c1=0,c2=0,c3=0;
+        for(int i=1;i<str.length()-1;i++){
+            if(str[i]=='(') c1++;
+            else if(str[i]==')'&&c2%2==0) c1--;
+            else if(str[i]=='['&&c2%2==0) c3++;
+            else if(str[i]==']'&&c2%2==0) c3--;
+            else if(str[i]=='"') c2++;
+            else if(str[i]==','&&c2%2==0&&c1==0&&c3==0){vec1.push_back(str.substr(last,i-last));last=i+1;}
+        }
+        if(last<str.length()-1){
+            vec1.push_back(str.substr(last,str.length()-last-1));
+        }
+        for(int i=0;i<vec1.size();i++){
+            vec2.push_back(_Parse(vec1[i]));
+        }
+        return new _Operation(vec2);
+        }
+
+    if(indexesOperFinal.size()>0||indexesFuncFinal.size()>0||typeFuncIndex.size()>0){
         int bestIdOper=-1,bestDepthOper=2147483647,bestPriorityOper=2147483647,bestPositionOper=2147483647;
         int bestIdFunc=-1,bestDepthFunc=2147483647,bestPositionFunc=2147483647;
-        std::vector<_Operation*> vec2;
+        int bestIdTypeFunc=-1,bestDepthTypeFunc=2147483647,bestPositionTypeFunc=2147483647;
+        std::vector<_Operation*> vec2,vec3;
         if(indexesOper.size()>0){
             //Если есть операторы, находим с наименьшим приоритетом
             
@@ -152,6 +218,32 @@ _Operation* _Parse(const std::string& string){
 
             
         }
+        if(typeFuncIndex.size()>0){
+            for(int i=0;i<typeFuncIndex.size();i++){
+                if(bestDepthFunc>typeFuncDepth[i]||
+                    bestDepthTypeFunc==typeFuncDepth[i]&&bestPositionTypeFunc>typeFuncIndex[i]
+                ){
+                    bestDepthTypeFunc=typeFuncDepth[i];
+                    bestPositionTypeFunc=typeFuncIndex[i];
+                    bestIdTypeFunc=typeFunc[i];
+                }
+            }
+            std::vector<std::string> vec1 = {};
+            for(int i=bestPositionTypeFunc;i>0;i--){if(str[i]=='.'){vec1.push_back(str.substr(0,i));break;}}
+            int last=bestPositionTypeFunc+typeFunctions[bestIdTypeFunc]->name.size(),c1=0,c2=0;
+            for(int i=bestPositionTypeFunc+typeFunctions[bestIdTypeFunc]->name.size();i<str.length()-1;i++){
+                if(str[i]=='(') c1++;
+                else if(str[i]==')') c1--;
+                else if(str[i]=='"') c2++;
+                else if(str[i]==','&&c2%2==0&&c1==0){vec1.push_back(str.substr(last,i-last));last=i;}
+            }
+            if(last<str.length()){
+                vec1.push_back(str.substr(last,str.length()-last));
+            }
+            for(int i=0;i<vec1.size();i++){
+                vec3.push_back(_Parse(vec1[i]));
+            }
+        }
         
         if(indexesFunc.size()>0){
             //Если есть функции, находим с наименьшим приоритетом
@@ -167,7 +259,7 @@ _Operation* _Parse(const std::string& string){
             }
             std::vector<std::string> vec1;
             int last=bestPositionFunc+functions[bestIdFunc]->name.size(),c1=0,c2=0;
-            for(int i=bestPositionFunc+functions[bestIdFunc]->name.size();i<str.length()-1;i++){
+            for(int i=bestPositionFunc+functions[bestIdFunc]->name.size()+1;i<str.length()-1;i++){
                 if(str[i]=='(') c1++;
                 else if(str[i]==')') c1--;
                 else if(str[i]=='"') c2++;
@@ -181,10 +273,11 @@ _Operation* _Parse(const std::string& string){
             }
 
         }
-        if(bestDepthFunc>=bestDepthOper)
+        if(bestDepthFunc>=bestDepthOper&&bestDepthOper<=bestDepthTypeFunc)
             return new _Operation(_Parse(str.substr(0,bestPositionOper)),_Parse(str.substr(bestPositionOper+operators[bestIdOper]->oper.size())),operators[bestIdOper]);
-        _Operation* operation = new _Operation(functions[bestIdFunc],vec2);
-        return operation;
+        else if(bestDepthFunc<=bestDepthTypeFunc)
+            return new _Operation(functions[bestIdFunc],vec2);
+        return new _Operation(typeFunctions[bestIdTypeFunc],vec3);
     }
     else{
         return new _Operation(AutoVar(str));
@@ -194,29 +287,41 @@ _Operation* _Parse(const std::string& string){
 // Декодер(думаю, тут очевидно)
 Var* _Decode(_Operation* tree){
     if(tree->is_leaf){
-        return tree->constant;
+        if(!tree->is_array){
+            //std::cout<<"Decode: "<<To_String(tree->constant)<<"\n";
+            return tree->constant;
+        }
+        std::vector<Var*> a;
+        for(_Operation* op:tree->code)
+            a.push_back(_Decode(op));
+        return new Var(a);
     }
     else if(!(tree->is_leaf)){
         if(!(tree->is_func)){
             //std::cout<<"Decode: "<<tree->oper->oper<<std::endl;
             if(tree->oper->is_unary){
-                return tree->oper->F1(GetVar(_Decode(tree->a)));;
+                return tree->oper->F1(_Decode(tree->a));
             }
             else{
-                return tree->oper->F2(GetVar(_Decode(tree->a)),GetVar(_Decode(tree->b)));
+                return tree->oper->F2(_Decode(tree->a),_Decode(tree->b));
             }
         }
         else{
-            if(!(tree->func_exe)){
+            if(!(tree->func_exe)&&!(tree->func_type)){
                 std::vector<Var*> v1;
-                for(_Operation* v:tree->arguments){
+                for(_Operation* v:tree->arguments)
                     v1.push_back(GetVar(_Decode(v)));
-                }
                 return tree->function->F(v1);
             }
-            else{
+            else if(tree->func_exe){
                 tree->exeFunc->F(tree->arguments,tree->code);
                 return nullptr;
+            }
+            else{
+                std::vector<Var*> v1;
+                for(_Operation* v:tree->arguments)
+                    v1.push_back(GetVar(_Decode(v)));
+                return tree->typefunc->F(v1);
             }
         }
     }
@@ -259,12 +364,14 @@ std::vector<_Operation*> _GetArgs(const std::string& string){
     }
     std::vector<std::string> vec1;
     std::vector<_Operation*> vec2;
-    int last=0,c1=0,c2=0;
+    int last=0,c1=0,c2=0,c3=0;
     for(int i=0;i<str.length()-1;i++){
         if(str[i]=='(') c1++;
-        else if(str[i]==')') c1--;
+        else if(str[i]==')'&&c2%2==0) c1--;
+        else if(str[i]=='['&&c2%2==0) c3++;
+        else if(str[i]==']'&&c2%2==0) c3--;
         else if(str[i]=='"') c2++;
-        else if(str[i]==','&&c2%2==0&&c1==0){vec1.push_back(str.substr(last,i-last));last=i;}
+        else if(str[i]==','&&c2%2==0&&c1==0&&c3==0){vec1.push_back(str.substr(last,i-last));last=i;}
     }
     if(last<str.length()){
         vec1.push_back(str.substr(last,str.length()-last));
