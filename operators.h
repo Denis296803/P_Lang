@@ -45,8 +45,7 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        if(a->type=='p') a=GetVar(To_Pointer(a));
-        if(b->type=='p') b=GetVar(To_Pointer(b));
+        a = GetVar(a); b=GetVar(b);
         return new Var(To_Double(a)-To_Double(b));
     }
 };
@@ -61,8 +60,7 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        if(a->type=='p') a=GetVar(To_Pointer(a));
-        if(b->type=='p') b=GetVar(To_Pointer(b));
+        a = GetVar(a); b=GetVar(b);
         return new Var(To_Double(a)*To_Double(b));
     }
 };
@@ -77,8 +75,7 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        if(a->type=='p') a=GetVar(To_Pointer(a));
-        if(b->type=='p') b=GetVar(To_Pointer(b));
+        a = GetVar(a); b=GetVar(b);
         return new Var(To_Double(a)/To_Double(b));
     }
 };
@@ -93,8 +90,7 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        if(a->type=='p') a=GetVar(To_Pointer(a));
-        if(b->type=='p') b=GetVar(To_Pointer(b));
+        a = GetVar(a); b=GetVar(b);
         return new Var(To_Int(a)%To_Int(b));
     }
 };
@@ -109,8 +105,7 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        if(a->type=='p') a=GetVar(To_Pointer(a));
-        if(b->type=='p') b=GetVar(To_Pointer(b));
+        a = GetVar(a); b=GetVar(b);
         double temp1 = To_Double(a),out=1; int temp2=To_Int(b);
         for(int i=0;i<temp2;i++)
             out=out*temp1;
@@ -128,8 +123,8 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        if(b->type=='p') b = GetVar(To_Pointer(b));
-        SetVar(To_Pointer(a),AutoVar(b));
+        if(b->type=='p') b = GetVar(b);
+        SetVar(To_Pointer(a),AutoVar(b),a->key);
         return b;
     }
 };

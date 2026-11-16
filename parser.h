@@ -22,9 +22,10 @@ public:
     Function* function;
     ExeFunction* exeFunc;
     TypeFunction* typefunc;
+    _Operation* key=nullptr;
     bool is_leaf = false,is_func = false,func_exe=false,is_array=false,func_type=false;
     _Operation(_Operation* par1,_Operation* par2,Operator* op){a=par1;b=par2;oper=op;is_leaf = false,is_func=false,func_exe=false;}
-    _Operation(Var* c){constant = c;is_leaf = true,is_func=false,func_exe=false;is_array=false;func_type=false;}
+    _Operation(Var* c,_Operation* k=nullptr){constant = c;is_leaf = true,is_func=false,func_exe=false;is_array=false;func_type=false;key=k;}
     _Operation(std::vector<_Operation*> op){code=op;is_leaf=true,is_array=true;is_func=false;func_exe=false;func_type=false;}
     _Operation(Function* func,std::vector<_Operation*> args){function = func; arguments = args;is_leaf = false,is_func=true,func_exe=false;func_type=false;}
     _Operation(TypeFunction* func,std::vector<_Operation*> args){typefunc=func,arguments=args,is_leaf=false;is_func=true;func_exe=false;func_type=true;}
@@ -79,13 +80,15 @@ _Operation* _Parse(const std::string& string){
     for(int indexOper=0;indexOper<operators.size();indexOper++){
         for(int i=0;i+operators[indexOper]->oper.size()<=str.size();i++){
             if(str.substr(i,(operators[indexOper]->oper.size()))==operators[indexOper]->oper){
-                int c1=0,c2=0;
+                int c1=0,c2=0,c3=0;
                 for(int j=0;j<i;j++){
                     if(str[j]=='(') c1++;
                     else if(str[j]==')') c1--;
                     else if(str[j]=='"') c2++;
+                    else if(str[j]=='[') c3++;
+                    else if(str[j]==']') c3--;
                 }
-                if(c2%2==0){indexesOper.push_back(i);opers.push_back(indexOper); depthsOper.push_back(c1);}
+                if(c2%2==0&&c3==0){indexesOper.push_back(i);opers.push_back(indexOper); depthsOper.push_back(c1);}
             }
         }
     }
@@ -112,31 +115,18 @@ _Operation* _Parse(const std::string& string){
     for(int indexFunc=0;indexFunc<functions.size();indexFunc++){
         for(int i=0;i+functions[indexFunc]->name.size()<str.size();i++){
             if(str.substr(i,(functions[indexFunc]->name.size()))==functions[indexFunc]->name){
-                int c1=0,c2=0;
+                int c1=0,c2=0,c3=0;
                 for(int j=0;j<i;j++){
                     if(str[j]=='(') c1++;
                     else if(str[j]==')') c1--;
                     else if(str[j]=='"') c2++;
+                    else if(str[j]=='[') c3++;
+                    else if(str[j]==']') c3--;
                 }
-                if(c2%2==0){indexesFunc.push_back(i);funcs.push_back(indexFunc); depthsFunc.push_back(c1);}
+                if(c2%2==0&&c3==0){indexesFunc.push_back(i);funcs.push_back(indexFunc); depthsFunc.push_back(c1);}
             }
         }
     }
-
-    // for(int indexFunc1=0;indexFunc1<funcs.size();indexFunc1++){
-    //     bool was_found=false;
-    //     for(int indexFunc2=0;indexFunc2<funcs.size();indexFunc2++){
-    //         if(indexFunc1!=indexFunc2&&(indexesFunc[indexFunc1]+functions[funcs[indexFunc1]]->name.length()>indexesFunc[indexFunc2]&&indexesFunc[indexFunc1]<indexesFunc[indexFunc2]||indexesFunc[indexFunc2]+functions[funcs[indexFunc2]]->name.length()>indexesFunc[indexFunc1]&&indexesFunc[indexFunc2]<indexesFunc[indexFunc1])&&functions[funcs[indexFunc1]]->name.length()<functions[funcs[indexFunc2]]->name.length()){
-    //             was_found=true;
-    //             break;
-    //         }
-    //     }
-    //     if(!was_found){
-    //         indexesFuncFinal.push_back(indexesFunc[indexFunc1]);
-    //         depthsFuncFinal.push_back(depthsFunc[indexFunc1]);
-    //         funcsFinal.push_back(funcs[indexFunc1]);
-    //     }
-    // }
     for(int indexFunc1=0;indexFunc1<funcs.size();indexFunc1++){
         if(str[indexesFunc[indexFunc1]+functions[funcs[indexFunc1]]->name.length()]=='('){
             indexesFuncFinal.push_back(indexesFunc[indexFunc1]);
@@ -151,13 +141,15 @@ _Operation* _Parse(const std::string& string){
     for(int indexTF=0;indexTF<typeFunctions.size();indexTF++){
         for(int i=0;i+typeFunctions[indexTF]->name.size()<=str.size();i++){
             if(str.substr(i,(typeFunctions[indexTF]->name.size()))==typeFunctions[indexTF]->name){
-                int c1=0,c2=0;
+                int c1=0,c2=0,c3=0;
                 for(int j=0;j<i;j++){
                     if(str[j]=='(') c1++;
                     else if(str[j]==')') c1--;
                     else if(str[j]=='"') c2++;
+                    else if(str[j]=='[') c3++;
+                    else if(str[j]==']') c3--;
                 }
-                if(c2%2==0){typeFuncIndex.push_back(i);typeFunc.push_back(indexTF); typeFuncDepth.push_back(c1);}
+                if(c2%2==0&&c3==0){typeFuncIndex.push_back(i);typeFunc.push_back(indexTF); typeFuncDepth.push_back(c1);}
             }
         }
     }
@@ -280,6 +272,15 @@ _Operation* _Parse(const std::string& string){
         return new _Operation(typeFunctions[bestIdTypeFunc],vec3);
     }
     else{
+        int c=-1;
+        for(int i=1;i<str.length();i++){
+        	if(str[i]=='['){c=i-1;break;}
+        }
+        if(c!=-1){
+        	_Operation* o = _Parse(str.substr(c+2,str.length()-3-c));
+            //std::cout<<str.substr(0,c+1)<<"|"<<str.substr(c+2,str.length()-3-c)<<"; "<<To_String(_Decode(_Parse(str.substr(c+2,str.length()-3-c))))<<";\n";
+        	return new _Operation(AutoVar(str.substr(0,c+1)),o);
+        }
         return new _Operation(AutoVar(str));
     }
 
@@ -289,7 +290,12 @@ Var* _Decode(_Operation* tree){
     if(tree->is_leaf){
         if(!tree->is_array){
             //std::cout<<"Decode: "<<To_String(tree->constant)<<"\n";
-            return tree->constant;
+            if(tree->key==nullptr)
+            	return tree->constant;
+            Var* a = tree->constant;
+            a->type='p';
+            a->key=_Decode(tree->key);
+            return a;
         }
         std::vector<Var*> a;
         for(_Operation* op:tree->code)

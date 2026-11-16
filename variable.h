@@ -12,10 +12,15 @@ class Var{
         std::vector<uint8_t> v={};
         std::string name="";
         std::vector<Var*> a={};
+        Var* key = nullptr;
         Var(long long int a){
             v.resize(8);
             std::memcpy(v.data(), &a, 8);
             type = 'i';
+        }
+        Var(char a){
+        	v.resize(1);
+        	std::memcpy(v.data(),&a,1);
         }
         Var(bool a){
             v.resize(1);
@@ -93,6 +98,7 @@ char Get_Type(Var* v){
 
 Var* GetVar(std::string);
 Var* AutoVar(std::string);
+Var* GetVar(Var*);
 
 std::string To_String(Var* x);
 std::string To_String(double x){
@@ -132,7 +138,8 @@ std::string To_String(bool x){
 std::string To_String(std::vector<Var*> a){
     std::string s = "[";
     for(Var* v:a)
-        s=s+To_String(v)+',';
+        if(v->type=='s'){s=s+'\"'+To_String(v)+"\",";}
+        else s=s+To_String(v)+',';
     if(a.size()!=0) s = s.substr(0,s.length()-1);
     return s+']';
 }
@@ -181,7 +188,7 @@ double To_Double(Var* x){
     if(x->type=='d') return To_Double(x->get_d());
     else if(x->type=='i') return To_Double(x->get_i());
     else if(x->type=='s') return To_Double(x->get_s());
-    else if(x->type=='p') return To_Double(GetVar(x->get_p()));
+    else if(x->type=='p') return To_Double(GetVar(x));
     return 0;
 }
 
@@ -208,11 +215,11 @@ long long int To_Int(std::string x){
     return a;
 }
 long long int To_Int(Var* x){
-
+    if(x==nullptr) return -1;
     if(x->type=='d') return To_Int(x->get_d());
     else if(x->type=='i') return To_Int(x->get_i());
     else if(x->type=='s') return To_Int(x->get_s());
-    else if(x->type=='p') return To_Int(GetVar(x->get_p()));
+    else if(x->type=='p') return To_Int(GetVar(x));
     std::cerr<<"Can't convert \""+(x->type)+(std::string)"\"to <Int>\n";
     throw 'e';
 }
@@ -244,25 +251,34 @@ bool To_Bool(Var* v){
 	if(type=='i') return To_Bool(v->get_i());
 	if(type=='d') return To_Bool(v->get_d());
 	if(type=='s') return To_Bool(v->get_s());
-	if(type=='p') return To_Bool(GetVar(v->get_p()));
+	if(type=='p') return To_Bool(GetVar(v));
     std::cerr<<"Can't convert \""+(v->type)+(std::string)"\"to <Bool>\n";
     throw 'e';
 }
 
-Var* GetVar(std::string a){
-    Var* v = GetConstant(a);
-    if(v!=nullptr) return v;
-    for(Var* v : variables){
-        if(v->name==a){
-            return v;
+Var* GetVar(std::string a,int key){
+    if(key==-1){
+        Var* v = GetConstant(a);
+        if(v!=nullptr) return v;
+        for(Var* v : variables){
+            if(v->name==a){
+                return v;
+            }
+        }
+        std::cerr<<"Var with name \""+a+"\" doesn't exist"<<std::endl;
+        throw 'e';
+    }
+    else{
+        for(Var* v : variables){
+            if(v->name==a){
+                return v->a[key];
+            }
         }
     }
-    std::cerr<<"Var with name \""+a+"\" doesn't exist"<<std::endl;
-    throw 'e';
 }
 Var* GetVar(Var* v){
     //std::cout<<v->name<<"("<<v->type<<") = "<<To_String(v)<<"\n";
-	if(v->type=='p') return GetVar(v->get_p());
+	if(v->type=='p') return GetVar(v->get_p(),To_Int(v->key));
 	return v;
 }
 
@@ -297,18 +313,34 @@ long long int GetInt(std::string a){
     throw 'e';
 }
 
-Var* SetVar(std::string a,Var* b){
-    for(Var* v : variables){
-        if(v->name==a){
-            v->type=b->type;
-            v->v.resize(b->v.size());
-            std::memcpy(v->v.data(),b->v.data(),b->v.size());
-            return b;
+Var* SetVar(std::string a,Var* b,Var* key=nullptr){
+    //std::cout<<"SetVar: "<<a<<"; "<<To_String(b)<<"; "<<((key!=nullptr)?(To_String(key)+';'):"")<<"\n";
+    if(key==nullptr){
+        for(Var* v : variables){
+            if(v->name==a){
+                v->type=b->type;
+                v->v.resize(b->v.size());
+                std::memcpy(v->v.data(),b->v.data(),b->v.size());
+                return b;
+            }
         }
+        b->name=To_String(a);
+        variables.push_back(b);
+        return b;
     }
-    b->name=To_String(a);
-    variables.push_back(b);
-    return b;
+    else{
+        for(Var* v : variables){
+            if(v->name==a){
+                v->type='a';
+                v = v->a[To_Int(key)];
+                v->v.resize(b->v.size());
+                std::memcpy(v->v.data(),b->v.data(),b->v.size());
+                return b;
+            }
+        }
+        std::cout<<"No such var\n";
+        throw 'e';
+    }
 }
 
 Var* AutoVar(std::string str){
