@@ -40,7 +40,7 @@ public:
 
 // Парсер(да, знаю, удивительно)
 _Operation* _Parse(const std::string& string){
-    //std::cout<<"Parse: "<<string<<"\n";
+    std::cout<<"Parse: "<<string<<"\n";
     std::string str = string;
     //Обрезка скобок
     while(str.size()>0&&str[0]==' ') str=str.substr(1,str.length()-1);
@@ -97,7 +97,7 @@ _Operation* _Parse(const std::string& string){
     for(int indexOper1=0;indexOper1<opers.size();indexOper1++){
         bool was_found=false;
         for(int indexOper2=0;indexOper2<opers.size();indexOper2++){
-            if(indexOper1!=indexOper2&&(indexesOper[indexOper1]+operators[opers[indexOper1]]->oper.length()>indexesOper[indexOper2]&&indexesOper[indexOper1]<indexesOper[indexOper2]||indexesOper[indexOper2]+operators[opers[indexOper2]]->oper.length()>indexesOper[indexOper1]&&indexesOper[indexOper2]<indexesOper[indexOper1])&&operators[opers[indexOper1]]->oper.length()<operators[opers[indexOper2]]->oper.length()){
+            if(indexOper1!=indexOper2&&(indexesOper[indexOper1]+operators[opers[indexOper1]]->oper.length()>=indexesOper[indexOper2]&&indexesOper[indexOper1]<=indexesOper[indexOper2]||indexesOper[indexOper2]+operators[opers[indexOper2]]->oper.length()>=indexesOper[indexOper1]&&indexesOper[indexOper2]<=indexesOper[indexOper1])&&operators[opers[indexOper1]]->oper.length()<operators[opers[indexOper2]]->oper.length()){
                 was_found=true;
                 break;
             }
@@ -289,12 +289,12 @@ _Operation* _Parse(const std::string& string){
 Var* _Decode(_Operation* tree){
     if(tree->is_leaf){
         if(!tree->is_array){
-            //std::cout<<"Decode: "<<To_String(tree->constant)<<"\n";
+            std::cout<<"Decode: "<<To_String(tree->constant)<<"\n";
             if(tree->key==nullptr)
             	return tree->constant;
             Var* a = tree->constant;
             a->type='p';
-            a->key=_Decode(tree->key);
+            a->key = (tree->key!=nullptr)?_Decode(tree->key):nullptr;
             return a;
         }
         std::vector<Var*> a;

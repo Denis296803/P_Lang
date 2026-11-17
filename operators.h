@@ -123,7 +123,8 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        if(b->type=='p') b = GetVar(b);
+		//std::cout<<"Asg: "<<To_String(a)<<"; "<<To_String(b)<<"\n";
+        b = GetVar(b);
         SetVar(To_Pointer(a),AutoVar(b),a->key);
         return b;
     }
@@ -140,6 +141,7 @@ public:
     Var* F2(Var* a, Var* b) override
     {
         //std::cout<<To_String(a)<<" "<<To_String(b);
+        a = GetVar(a); b = GetVar(b);
         if(To_String(a)==To_String(b))
             return new Var(true);
         return new Var(false);

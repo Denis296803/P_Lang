@@ -66,7 +66,7 @@ class If:public ExeFunction{
     public:
         If(){name="if";}
         void F(std::vector<_Operation*> args,std::vector<_Operation*> code) override{
-            if(_Decode(args[0])->get_b()==true){
+            if(To_Bool(_Decode(args[0]))==true){
                 for(_Operation* o:code)
                     _Decode(o);
             }

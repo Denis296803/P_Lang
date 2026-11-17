@@ -271,9 +271,12 @@ Var* GetVar(std::string a,int key){
     else{
         for(Var* v : variables){
             if(v->name==a){
+                if(key<0) key=key+v->a.size();
                 return v->a[key];
             }
         }
+        std::cout<<"Key out of range\n";
+        throw 'e';
     }
 }
 Var* GetVar(Var* v){
@@ -332,7 +335,9 @@ Var* SetVar(std::string a,Var* b,Var* key=nullptr){
         for(Var* v : variables){
             if(v->name==a){
                 v->type='a';
-                v = v->a[To_Int(key)];
+                int k = To_Int(key);
+                if(k<0)k=k+v->a.size();
+                v = v->a[k];
                 v->v.resize(b->v.size());
                 std::memcpy(v->v.data(),b->v.data(),b->v.size());
                 return b;
