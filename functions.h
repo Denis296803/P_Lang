@@ -111,9 +111,18 @@ class Push : public TypeFunction{
     public:
         Push(){name="push";}
         Var* F(std::vector<Var*> args) override{
-            args[0]->a.push_back(args[1]);
-            SetVar(args[0]->name,args[0]);
-            return args[0];
+            if(args.size()==2){
+	            args[0]->a.push_back(args[1]);
+	            SetVar(args[0]->name,args[0]);
+	            return args[0];
+            }
+            else if(args.size()==3){
+            	args[0]->a.insert(args[0]->a.begin()+To_Int(args[2]),args[1]);
+            	SetVar(args[0]->name,args[0]);
+            	return args[0];
+            }
+            else
+                return args[0];
         }
 };
 

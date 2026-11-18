@@ -38,6 +38,8 @@ public:
     };
 };
 
+std::vector<_Operation*> _GetArgs(const std::string &string);
+
 // Парсер(да, знаю, удивительно)
 _Operation* _Parse(const std::string& string){
     std::cout<<"Parse: "<<string<<"\n";
@@ -179,7 +181,7 @@ _Operation* _Parse(const std::string& string){
             else if(str[i]=='"') c2++;
             else if(str[i]==','&&c2%2==0&&c1==0&&c3==0){vec1.push_back(str.substr(last,i-last));last=i+1;}
         }
-        if(last<str.length()-1){
+        if(last<str.length()){
             vec1.push_back(str.substr(last,str.length()-last-1));
         }
         for(int i=0;i<vec1.size();i++){
@@ -220,21 +222,19 @@ _Operation* _Parse(const std::string& string){
                     bestIdTypeFunc=typeFunc[i];
                 }
             }
-            std::vector<std::string> vec1 = {};
-            for(int i=bestPositionTypeFunc;i>0;i--){if(str[i]=='.'){vec1.push_back(str.substr(0,i));break;}}
-            int last=bestPositionTypeFunc+typeFunctions[bestIdTypeFunc]->name.size(),c1=0,c2=0;
-            for(int i=bestPositionTypeFunc+typeFunctions[bestIdTypeFunc]->name.size();i<str.length()-1;i++){
-                if(str[i]=='(') c1++;
-                else if(str[i]==')') c1--;
-                else if(str[i]=='"') c2++;
-                else if(str[i]==','&&c2%2==0&&c1==0){vec1.push_back(str.substr(last,i-last));last=i;}
+            int c1=0,c2=0,c3=0,i1=0,i2=str.length()-1,i3=0;
+            i1=bestPositionTypeFunc+typeFunctions[bestIdTypeFunc]->name.length()+1;
+            for(int i=bestPositionTypeFunc+typeFunctions[bestIdTypeFunc]->name.length();i<str.length();i++){
+                if(str[i]=='['&&c3%2==0) c1++;
+                else if(str[i]==']'&&c3%2==0) c1--;
+                else if(str[i]==')'&&c3%2==0) c2++;
+                else if(str[i]=='('&&c3%2==0) c2--;
+                else if(str[i]=='"') c3++;
+                if(c3%2==0&&str[i]=='.'&&c1==0&&c2==0) i3 = i;
+                if(c3%2==0&&str[i]==')'&&c1==0&&c2==0) i2=i-1;
             }
-            if(last<str.length()){
-                vec1.push_back(str.substr(last,str.length()-last));
-            }
-            for(int i=0;i<vec1.size();i++){
-                vec3.push_back(_Parse(vec1[i]));
-            }
+            std::vector<_Operation*> vec3 = _GetArgs(str.substr(i1,i2-i1+1));
+            vec3.insert(vec3.begin(),_Parse(str.substr(0,i3+1)));
         }
         
         if(indexesFunc.size()>0){
@@ -249,21 +249,17 @@ _Operation* _Parse(const std::string& string){
                     bestIdFunc=funcsFinal[i];
                 }
             }
-            std::vector<std::string> vec1;
-            int last=bestPositionFunc+functions[bestIdFunc]->name.size(),c1=0,c2=0;
-            for(int i=bestPositionFunc+functions[bestIdFunc]->name.size()+1;i<str.length()-1;i++){
-                if(str[i]=='(') c1++;
-                else if(str[i]==')') c1--;
-                else if(str[i]=='"') c2++;
-                else if(str[i]==','&&c2%2==0&&c1==0){vec1.push_back(str.substr(last,i-last));last=i;}
+            int c1=0,c2=0,c3=0,i1=0,i2=str.length()-1;
+            i1=bestPositionFunc+functions[bestIdFunc]->name.length()+1;
+            for(int i=bestPositionFunc+functions[bestIdFunc]->name.length();i<str.length();i++){
+                if(str[i]=='['&&c3%2==0) c1++;
+                else if(str[i]==']'&&c3%2==0) c1--;
+                else if(str[i]==')'&&c3%2==0) c2++;
+                else if(str[i]=='('&&c3%2==0) c2--;
+                else if(str[i]=='"') c3++;
+                if(c3%2==0&&str[i]==')'&&c1==0&&c2==0) i2=i-1;
             }
-            if(last<str.length()){
-                vec1.push_back(str.substr(last,str.length()-last));
-            }
-            for(int i=0;i<vec1.size();i++){
-                vec2.push_back(_Parse(vec1[i]));
-            }
-
+            std::vector<_Operation*> vec2 = _GetArgs(str.substr(i1,i2-i1+1));
         }
         if(bestDepthFunc>=bestDepthOper&&bestDepthOper<=bestDepthTypeFunc)
             return new _Operation(_Parse(str.substr(0,bestPositionOper)),_Parse(str.substr(bestPositionOper+operators[bestIdOper]->oper.size())),operators[bestIdOper]);
@@ -347,6 +343,8 @@ void Execute(std::vector<std::string> strings){
 
 std::vector<_Operation*> _GetArgs(const std::string& string){
     std::string str = string;
+    std::cout<<"GetArgs: "<<str<<"\n";
+    if(str=="") return {}; 
     while(str[0]==' ') str=str.substr(1,str.length()-1);
     while(str[str.size()-1]==' ') str=str.substr(0,str.length()-1);
     while(true){
@@ -371,13 +369,13 @@ std::vector<_Operation*> _GetArgs(const std::string& string){
     std::vector<std::string> vec1;
     std::vector<_Operation*> vec2;
     int last=0,c1=0,c2=0,c3=0;
-    for(int i=0;i<str.length()-1;i++){
+    for(int i=0;i<str.length();i++){
         if(str[i]=='(') c1++;
         else if(str[i]==')'&&c2%2==0) c1--;
         else if(str[i]=='['&&c2%2==0) c3++;
         else if(str[i]==']'&&c2%2==0) c3--;
         else if(str[i]=='"') c2++;
-        else if(str[i]==','&&c2%2==0&&c1==0&&c3==0){vec1.push_back(str.substr(last,i-last));last=i;}
+        else if(str[i]==','&&c2%2==0&&c1==0&&c3==0){vec1.push_back(str.substr(last,i-last));last=i+1;}
     }
     if(last<str.length()){
         vec1.push_back(str.substr(last,str.length()-last));

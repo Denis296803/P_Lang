@@ -337,9 +337,7 @@ Var* SetVar(std::string a,Var* b,Var* key=nullptr){
                 v->type='a';
                 int k = To_Int(key);
                 if(k<0)k=k+v->a.size();
-                v = v->a[k];
-                v->v.resize(b->v.size());
-                std::memcpy(v->v.data(),b->v.data(),b->v.size());
+                v->a[k]=b;
                 return b;
             }
         }
