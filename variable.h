@@ -22,6 +22,10 @@ class Var{
         	v.resize(1);
         	std::memcpy(v.data(),&a,1);
         }
+        Var(const char* a){
+        	v.resize(1);
+        	std::memcpy(v.data(),&a,1);
+        }
         Var(bool a){
             v.resize(1);
             if(a) v[0]=255;
@@ -257,6 +261,7 @@ bool To_Bool(Var* v){
 }
 
 Var* GetVar(std::string a,int key){
+    //std::cout<<"GetVar: "<<a<<"; "<<key<<";\n";
     if(key==-1){
         Var* v = GetConstant(a);
         if(v!=nullptr) return v;
@@ -316,20 +321,41 @@ long long int GetInt(std::string a){
     throw 'e';
 }
 
-Var* SetVar(std::string a,Var* b,Var* key=nullptr){
-    //std::cout<<"SetVar: "<<a<<"; "<<To_String(b)<<"; "<<((key!=nullptr)?(To_String(key)+';'):"")<<"\n";
+void SetVar(std::string a,Var* b,Var* key=nullptr){
+    //std::cout<<"SetVar: "<<a<<"; "<<To_String(b)<<"; "<<((key!=nullptr)?(To_String(key)+';'):"nullptr;")<<"\n";
     if(key==nullptr){
-        for(Var* v : variables){
-            if(v->name==a){
-                v->type=b->type;
-                v->v.resize(b->v.size());
-                std::memcpy(v->v.data(),b->v.data(),b->v.size());
-                return b;
-            }
+        if(b->type!='a'){
+	        for(Var* v : variables){
+	            if(v->name==a){
+                    if(v!=b){
+                        v->type=b->type;
+                        v->v.resize(b->v.size());
+                        std::memcpy(v->v.data(),b->v.data(),b->v.size());
+                    }
+                    return;
+	            }
+	        }
+	        b->name=To_String(a);
+	        variables.push_back(b);
         }
-        b->name=To_String(a);
-        variables.push_back(b);
-        return b;
+        else{
+        	for(Var* v : variables){
+        	    //std::cout<<"SetVar: "<<To_String(v)<<"\n";
+	            if(v->name==a){
+                    if(v!=b){
+                        v->type=b->type;
+                        v->a.clear();
+                        v->a.resize(b->a.size());
+                        for(int i=0;i<b->a.size();i++){
+                            v->a[i] = b->a[i];
+                        }
+                    }
+                    return;
+	            }
+	        }
+	        b->name=To_String(a);
+	        variables.push_back(b);
+        }
     }
     else{
         for(Var* v : variables){
@@ -338,7 +364,7 @@ Var* SetVar(std::string a,Var* b,Var* key=nullptr){
                 int k = To_Int(key);
                 if(k<0)k=k+v->a.size();
                 v->a[k]=b;
-                return b;
+                return;
             }
         }
         std::cout<<"No such var\n";

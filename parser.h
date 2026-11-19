@@ -17,8 +17,8 @@ public:
     _Operation* a; _Operation* b;
     Operator* oper;
     Var* constant;
-    std::vector<_Operation*> arguments;
-    std::vector<_Operation*> code;
+    std::vector<_Operation*> arguments = {};
+    std::vector<_Operation*> code = {};
     Function* function;
     ExeFunction* exeFunc;
     TypeFunction* typefunc;
@@ -42,7 +42,7 @@ std::vector<_Operation*> _GetArgs(const std::string &string);
 
 // Парсер(да, знаю, удивительно)
 _Operation* _Parse(const std::string& string){
-    std::cout<<"Parse: "<<string<<"\n";
+    //std::cout<<"Parse: "<<string<<"\n";
     std::string str = string;
     //Обрезка скобок
     while(str.size()>0&&str[0]==' ') str=str.substr(1,str.length()-1);
@@ -189,7 +189,7 @@ _Operation* _Parse(const std::string& string){
         }
         return new _Operation(vec2);
         }
-
+    
     if(indexesOperFinal.size()>0||indexesFuncFinal.size()>0||typeFuncIndex.size()>0){
         int bestIdOper=-1,bestDepthOper=2147483647,bestPriorityOper=2147483647,bestPositionOper=2147483647;
         int bestIdFunc=-1,bestDepthFunc=2147483647,bestPositionFunc=2147483647;
@@ -227,14 +227,13 @@ _Operation* _Parse(const std::string& string){
             for(int i=bestPositionTypeFunc+typeFunctions[bestIdTypeFunc]->name.length();i<str.length();i++){
                 if(str[i]=='['&&c3%2==0) c1++;
                 else if(str[i]==']'&&c3%2==0) c1--;
-                else if(str[i]==')'&&c3%2==0) c2++;
-                else if(str[i]=='('&&c3%2==0) c2--;
+                else if(str[i]==')'&&c3%2==0) c2--;
+                else if(str[i]=='('&&c3%2==0) c2++;
                 else if(str[i]=='"') c3++;
-                if(c3%2==0&&str[i]=='.'&&c1==0&&c2==0) i3 = i;
                 if(c3%2==0&&str[i]==')'&&c1==0&&c2==0) i2=i-1;
             }
-            std::vector<_Operation*> vec3 = _GetArgs(str.substr(i1,i2-i1+1));
-            vec3.insert(vec3.begin(),_Parse(str.substr(0,i3+1)));
+            vec3 = _GetArgs(str.substr(i1,i2-i1+1));
+            vec3.insert(vec3.begin(),_Parse(str.substr(0,bestPositionTypeFunc-1)));
         }
         
         if(indexesFunc.size()>0){
@@ -254,12 +253,13 @@ _Operation* _Parse(const std::string& string){
             for(int i=bestPositionFunc+functions[bestIdFunc]->name.length();i<str.length();i++){
                 if(str[i]=='['&&c3%2==0) c1++;
                 else if(str[i]==']'&&c3%2==0) c1--;
-                else if(str[i]==')'&&c3%2==0) c2++;
-                else if(str[i]=='('&&c3%2==0) c2--;
+                else if(str[i]==')'&&c3%2==0) c2--;
+                else if(str[i]=='('&&c3%2==0) c2++;
                 else if(str[i]=='"') c3++;
                 if(c3%2==0&&str[i]==')'&&c1==0&&c2==0) i2=i-1;
+                if(c3%2==0&&str[i]=='('&&c1==0&&c2==1) i1=i+1;
             }
-            std::vector<_Operation*> vec2 = _GetArgs(str.substr(i1,i2-i1+1));
+            vec2 = _GetArgs(str.substr(i1,i2-i1+1));
         }
         if(bestDepthFunc>=bestDepthOper&&bestDepthOper<=bestDepthTypeFunc)
             return new _Operation(_Parse(str.substr(0,bestPositionOper)),_Parse(str.substr(bestPositionOper+operators[bestIdOper]->oper.size())),operators[bestIdOper]);
@@ -285,7 +285,7 @@ _Operation* _Parse(const std::string& string){
 Var* _Decode(_Operation* tree){
     if(tree->is_leaf){
         if(!tree->is_array){
-            std::cout<<"Decode: "<<To_String(tree->constant)<<"\n";
+            //std::cout<<"Decode: "<<To_String(tree->constant)<<"\n";
             if(tree->key==nullptr)
             	return tree->constant;
             Var* a = tree->constant;
@@ -293,9 +293,11 @@ Var* _Decode(_Operation* tree){
             a->key = (tree->key!=nullptr)?_Decode(tree->key):nullptr;
             return a;
         }
-        std::vector<Var*> a;
-        for(_Operation* op:tree->code)
+        //std::cout<<"Decode: arr;"<<tree->code.size()<<"\n";
+        std::vector<Var*> a; int c=0;
+        for(_Operation* op:tree->code){
             a.push_back(_Decode(op));
+        }
         return new Var(a);
     }
     else if(!(tree->is_leaf)){
@@ -310,16 +312,21 @@ Var* _Decode(_Operation* tree){
         }
         else{
             if(!(tree->func_exe)&&!(tree->func_type)){
-                std::vector<Var*> v1;
-                for(_Operation* v:tree->arguments)
-                    v1.push_back(GetVar(_Decode(v)));
+                //std::cout<<"Decode: "<<tree->function->name<<"; "<<tree->arguments.size()<<std::endl;
+                std::vector<Var*> v1 = {};
+                if(tree->arguments.size()>0){
+                    for(_Operation* v:tree->arguments)
+                        v1.push_back(GetVar(_Decode(v)));
+                }
                 return tree->function->F(v1);
             }
             else if(tree->func_exe){
+                //std::cout<<"Decode: "<<tree->exeFunc->name<<"; "<<tree->arguments.size()<<std::endl;
                 tree->exeFunc->F(tree->arguments,tree->code);
                 return nullptr;
             }
             else{
+                //std::cout<<"Decode: "<<tree->typefunc->name<<"; "<<tree->arguments.size()<<std::endl;
                 std::vector<Var*> v1;
                 for(_Operation* v:tree->arguments)
                     v1.push_back(GetVar(_Decode(v)));
@@ -343,7 +350,7 @@ void Execute(std::vector<std::string> strings){
 
 std::vector<_Operation*> _GetArgs(const std::string& string){
     std::string str = string;
-    std::cout<<"GetArgs: "<<str<<"\n";
+    //std::cout<<"GetArgs: "<<str<<"\n";
     if(str=="") return {}; 
     while(str[0]==' ') str=str.substr(1,str.length()-1);
     while(str[str.size()-1]==' ') str=str.substr(0,str.length()-1);

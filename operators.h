@@ -123,10 +123,11 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-		//std::cout<<"Asg: "<<To_String(a)<<"; "<<To_String(b)<<"\n";
         b = GetVar(b);
-        SetVar(To_Pointer(a),AutoVar(b),a->key);
-        return b;
+        //std::cout<<"ASG: "<<a->name<<"("<<a->type<<")"<<" = \""<<To_String(a)<<"\"; "<<b->name<<"("<<b->type<<")"<<" = \""<<To_String(b)<<"\"\n";
+        SetVar(To_Pointer(a),b,a->key);
+        //std::cout<<"ASG: "<<a->name<<"("<<a->type<<")"<<" = \""<<To_String(a)<<"\"; "<<b->name<<"("<<b->type<<")"<<" = \""<<To_String(b)<<"\"\n";
+        return nullptr;
     }
 };
 class Equ : public Operator

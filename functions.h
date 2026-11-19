@@ -18,8 +18,9 @@ class Write:public Function{
     public:
         Write(){name = "Console.Write";}
         Var* F(std::vector<Var*> args) override{
+            if(args.size()>0)
             std::cout<<To_String(GetVar(args[0]));
-            return new Var(0ll);
+            return nullptr;
         }
 };
 class Read:public Function{
@@ -104,7 +105,9 @@ class To_N:public TypeFunction{
     public:
         To_N(){name="to_n";}
         Var* F(std::vector<Var*> args) override{
-            return new Var(To_String(args[0])+"\n");
+            if(args.size()>0)
+                return new Var(To_String(args[0])+"\n");
+            return nullptr;
         }
 };
 class Push : public TypeFunction{
@@ -121,11 +124,20 @@ class Push : public TypeFunction{
             	SetVar(args[0]->name,args[0]);
             	return args[0];
             }
-            else
+            else if(args.size()>0)
                 return args[0];
+            return nullptr;
+        }
+};
+class Length: public TypeFunction{
+    public:
+        Length(){name="length";}
+        Var* F(std::vector<Var*> args) override{
+            if(args.size()>0)
+                return new Var((long long int)GetVar(args[0])->a.size());
         }
 };
 
 std::vector<Function*> functions = {new Write(),new Read(),new Str(),new Int(),new Double()};
 std::vector<ExeFunction*> exeFunctions = {new If(),new For()};
-std::vector<TypeFunction*> typeFunctions = {new To_N(),new Push()};
+std::vector<TypeFunction*> typeFunctions = {new To_N(),new Push(),new Length()};
