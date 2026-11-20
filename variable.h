@@ -77,7 +77,6 @@ std::vector<Var*> variables;
 Var* GetConstant(std::string a);
 std::string To_String(Var* v);
 char Get_Type(std::string str){
-    //std::cout<<str<<"\n";
     if(str=="false"||str=="False"||str=="FALSE"||str=="True"||str=="TRUE"||str=="true") return 'b';
     if(str[0]=='"'&&str[str.length()-1]=='"') return 's';
     bool wasMinus=false,wasPoint=false;
@@ -133,7 +132,12 @@ std::string To_String(long long int x){
 }
 std::string To_String(std::string x){
     if(x[0]=='"'&&x[x.length()-1]=='"') x = x.substr(1,x.length()-2);
-    return x;
+    std::string s="";
+    for(int i=0;i<x.length()-1;i++){
+        if(x[i]=='\\'&&x[i+1]=='n'){i=i+1;s=s+'\n';}
+        else{s=s+x[i];}
+    }
+    return s;
 }
 std::string To_String(bool x){
     if(!x) return "false";
@@ -148,7 +152,6 @@ std::string To_String(std::vector<Var*> a){
     return s+']';
 }
 std::string To_String(Var* x){
-    //std::cout<<x->get_p();
     if(x->type=='d') return To_String(x->get_d());
     if(x->type=='s') return To_String(x->get_s());
     if(x->type=='i') return To_String(x->get_i());
@@ -261,7 +264,6 @@ bool To_Bool(Var* v){
 }
 
 Var* GetVar(std::string a,int key){
-    //std::cout<<"GetVar: "<<a<<"; "<<key<<";\n";
     if(key==-1){
         Var* v = GetConstant(a);
         if(v!=nullptr) return v;
@@ -285,14 +287,12 @@ Var* GetVar(std::string a,int key){
     }
 }
 Var* GetVar(Var* v){
-    //std::cout<<v->name<<"("<<v->type<<") = "<<To_String(v)<<"\n";
 	if(v->type=='p') return GetVar(v->get_p(),To_Int(v->key));
 	return v;
 }
 
 double GetDouble(std::string a){
     for(Var* v : variables){
-        //std::cout<<To_String(a)<<" "<<v->name<<std::endl;
         if(v->name==a){
             return To_Double(v);
         }
@@ -302,7 +302,6 @@ double GetDouble(std::string a){
 }
 std::string GetString(std::string a){
     for(Var* v : variables){
-        //std::cout<<To_String(a)<<" "<<v->name<<std::endl;
         if(v->name==a){
             return To_String(v);
         }
@@ -312,7 +311,6 @@ std::string GetString(std::string a){
 }
 long long int GetInt(std::string a){
     for(Var* v : variables){
-        //std::cout<<To_String(a)<<" "<<v->name<<std::endl;
         if(v->name==a){
             return To_Int(v);
         }
@@ -322,7 +320,6 @@ long long int GetInt(std::string a){
 }
 
 void SetVar(std::string a,Var* b,Var* key=nullptr){
-    //std::cout<<"SetVar: "<<a<<"; "<<To_String(b)<<"; "<<((key!=nullptr)?(To_String(key)+';'):"nullptr;")<<"\n";
     if(key==nullptr){
         if(b->type!='a'){
 	        for(Var* v : variables){
@@ -340,7 +337,6 @@ void SetVar(std::string a,Var* b,Var* key=nullptr){
         }
         else{
         	for(Var* v : variables){
-        	    //std::cout<<"SetVar: "<<To_String(v)<<"\n";
 	            if(v->name==a){
                     if(v!=b){
                         v->type=b->type;

@@ -18,6 +18,7 @@ class Write:public Function{
     public:
         Write(){name = "Console.Write";}
         Var* F(std::vector<Var*> args) override{
+            for(int i=0;i<args.size();i++) args[i]=GetVar(args[i]);
             if(args.size()>0)
             std::cout<<To_String(GetVar(args[0]));
             return nullptr;
@@ -27,6 +28,7 @@ class Read:public Function{
 	public:
 		Read(){name="Console.Read";}
 		Var* F(std::vector<Var*> args) override{
+            for(int i=0;i<args.size();i++) args[i]=GetVar(args[i]);
 			std::string s;
 			std::getline(std::cin,s);
 			return new Var(s);
@@ -36,6 +38,7 @@ class Str:public Function{
 	public:
 		Str(){name="Str";}
 		Var* F(std::vector<Var*> args) override{
+            for(int i=0;i<args.size();i++) args[i]=GetVar(args[i]);
 			return new Var(To_String(args[0]));
 		}
 };
@@ -44,6 +47,7 @@ class Int:public Function{
 	public:
 		Int(){name="Int";}
 		Var* F(std::vector<Var*> args) override{
+            for(int i=0;i<args.size();i++) args[i]=GetVar(args[i]);
 			return new Var(To_Int(args[0]));
 		}
 };
@@ -52,10 +56,10 @@ class Double:public Function{
 	public:
 		Double(){name="Double";}
 		Var* F(std::vector<Var*> args) override{
+            for(int i=0;i<args.size();i++) args[i]=GetVar(args[i]);
 			return new Var(To_Double(args[0]));
 		}
 };
-
 
 class ExeFunction{
     public:
@@ -85,7 +89,7 @@ class For:public ExeFunction{
             if(args.size()>=2){
                 a = To_Double(_Decode(args[0]));
                 b = To_Double(_Decode(args[1]));}
-            if(args.size()>=1)
+            if(args.size()==1)
                 b = To_Double(_Decode(args[0]));
             for(double i=a;i<b;i=i+c){
                 if(var_name!="")
@@ -105,6 +109,7 @@ class To_N:public TypeFunction{
     public:
         To_N(){name="to_n";}
         Var* F(std::vector<Var*> args) override{
+            for(int i=0;i<args.size();i++) args[i]=GetVar(args[i]);
             if(args.size()>0)
                 return new Var(To_String(args[0])+"\n");
             return nullptr;
@@ -114,6 +119,7 @@ class Push : public TypeFunction{
     public:
         Push(){name="push";}
         Var* F(std::vector<Var*> args) override{
+            for(int i=0;i<args.size();i++) args[i]=GetVar(args[i]);
             if(args.size()==2){
 	            args[0]->a.push_back(args[1]);
 	            SetVar(args[0]->name,args[0]);
@@ -133,11 +139,24 @@ class Length: public TypeFunction{
     public:
         Length(){name="length";}
         Var* F(std::vector<Var*> args) override{
+            for(int i=0;i<args.size();i++) args[i]=GetVar(args[i]);
             if(args.size()>0)
                 return new Var((long long int)GetVar(args[0])->a.size());
+        }
+};
+class Pop: public TypeFunction{
+    public:
+        Pop(){name="pop";}
+        Var* F(std::vector<Var*> args) override{
+            for(int i=0;i<args.size();i++) args[i]=GetVar(args[i]);
+            if(args.size()>1){
+                Var* a = GetVar(args[0]);
+                a->a.erase(a->a.begin()+To_Int(args[1]));
+                return a;
+            }
         }
 };
 
 std::vector<Function*> functions = {new Write(),new Read(),new Str(),new Int(),new Double()};
 std::vector<ExeFunction*> exeFunctions = {new If(),new For()};
-std::vector<TypeFunction*> typeFunctions = {new To_N(),new Push(),new Length()};
+std::vector<TypeFunction*> typeFunctions = {new To_N(),new Push(),new Length(),new Pop()};

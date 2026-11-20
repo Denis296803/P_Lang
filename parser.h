@@ -42,7 +42,7 @@ std::vector<_Operation*> _GetArgs(const std::string &string);
 
 // Парсер(да, знаю, удивительно)
 _Operation* _Parse(const std::string& string){
-    //std::cout<<"Parse: "<<string<<"\n";
+    
     std::string str = string;
     //Обрезка скобок
     while(str.size()>0&&str[0]==' ') str=str.substr(1,str.length()-1);
@@ -71,7 +71,7 @@ _Operation* _Parse(const std::string& string){
     while(str.size()>0&&str[0]==' ') str=str.substr(1,str.length()-1);
     while(str.size()>0&&str[str.size()-1]==' ') str=str.substr(0,str.length()-1);
     if(str.size()==0){return new _Operation(new Var(""));}
-    //std::cout<<string<<std::endl;
+    //std::cout<<str<<std::endl;
     if(str[0]=='"'&&str[str.length()-1]=='"'){
         Var* v = new Var(str.substr(1,str.length()-2));
         v->type='s';    
@@ -274,7 +274,7 @@ _Operation* _Parse(const std::string& string){
         }
         if(c!=-1){
         	_Operation* o = _Parse(str.substr(c+2,str.length()-3-c));
-            //std::cout<<str.substr(0,c+1)<<"|"<<str.substr(c+2,str.length()-3-c)<<"; "<<To_String(_Decode(_Parse(str.substr(c+2,str.length()-3-c))))<<";\n";
+            
         	return new _Operation(AutoVar(str.substr(0,c+1)),o);
         }
         return new _Operation(AutoVar(str));
@@ -285,7 +285,6 @@ _Operation* _Parse(const std::string& string){
 Var* _Decode(_Operation* tree){
     if(tree->is_leaf){
         if(!tree->is_array){
-            //std::cout<<"Decode: "<<To_String(tree->constant)<<"\n";
             if(tree->key==nullptr)
             	return tree->constant;
             Var* a = tree->constant;
@@ -293,7 +292,6 @@ Var* _Decode(_Operation* tree){
             a->key = (tree->key!=nullptr)?_Decode(tree->key):nullptr;
             return a;
         }
-        //std::cout<<"Decode: arr;"<<tree->code.size()<<"\n";
         std::vector<Var*> a; int c=0;
         for(_Operation* op:tree->code){
             a.push_back(_Decode(op));
@@ -302,7 +300,6 @@ Var* _Decode(_Operation* tree){
     }
     else if(!(tree->is_leaf)){
         if(!(tree->is_func)){
-            //std::cout<<"Decode: "<<tree->oper->oper<<std::endl;
             if(tree->oper->is_unary){
                 return tree->oper->F1(_Decode(tree->a));
             }
@@ -312,7 +309,6 @@ Var* _Decode(_Operation* tree){
         }
         else{
             if(!(tree->func_exe)&&!(tree->func_type)){
-                //std::cout<<"Decode: "<<tree->function->name<<"; "<<tree->arguments.size()<<std::endl;
                 std::vector<Var*> v1 = {};
                 if(tree->arguments.size()>0){
                     for(_Operation* v:tree->arguments)
@@ -321,12 +317,10 @@ Var* _Decode(_Operation* tree){
                 return tree->function->F(v1);
             }
             else if(tree->func_exe){
-                //std::cout<<"Decode: "<<tree->exeFunc->name<<"; "<<tree->arguments.size()<<std::endl;
                 tree->exeFunc->F(tree->arguments,tree->code);
                 return nullptr;
             }
             else{
-                //std::cout<<"Decode: "<<tree->typefunc->name<<"; "<<tree->arguments.size()<<std::endl;
                 std::vector<Var*> v1;
                 for(_Operation* v:tree->arguments)
                     v1.push_back(GetVar(_Decode(v)));
@@ -341,16 +335,13 @@ std::vector<_Operation*> ParseMega(std::vector<std::string> st);
 
 void Execute(std::vector<std::string> strings){
     std::vector<_Operation*> v = ParseMega(strings);
-    //std::cout<<"Decode";
     for(_Operation* o:v){
-        //std::cout<<To_String(_Decode(o))<<std::endl;
         _Decode(o);
     }
 }
 
 std::vector<_Operation*> _GetArgs(const std::string& string){
     std::string str = string;
-    //std::cout<<"GetArgs: "<<str<<"\n";
     if(str=="") return {}; 
     while(str[0]==' ') str=str.substr(1,str.length()-1);
     while(str[str.size()-1]==' ') str=str.substr(0,str.length()-1);
@@ -398,7 +389,6 @@ std::vector<_Operation*> ParseMega(std::vector<std::string> strings){
     std::vector<_Operation*> out,args;
     for(int i=0;i<strings.size();i++){
         std::string string = strings[i];
-        //std::cout<<string<<std::endl;
         if(string!=""){
             if(!was_found){
                 for(ExeFunction* f:exeFunctions){

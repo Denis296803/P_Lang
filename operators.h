@@ -28,6 +28,7 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
+		a = GetVar(a); b = GetVar(b);
         if(a->type=='s'||b->type=='s'){
             return new Var(To_String(a)+To_String(b));
         }
@@ -124,9 +125,7 @@ public:
     Var* F2(Var* a, Var* b) override
     {
         b = GetVar(b);
-        //std::cout<<"ASG: "<<a->name<<"("<<a->type<<")"<<" = \""<<To_String(a)<<"\"; "<<b->name<<"("<<b->type<<")"<<" = \""<<To_String(b)<<"\"\n";
         SetVar(To_Pointer(a),b,a->key);
-        //std::cout<<"ASG: "<<a->name<<"("<<a->type<<")"<<" = \""<<To_String(a)<<"\"; "<<b->name<<"("<<b->type<<")"<<" = \""<<To_String(b)<<"\"\n";
         return nullptr;
     }
 };
@@ -141,7 +140,6 @@ public:
     }
     Var* F2(Var* a, Var* b) override
     {
-        //std::cout<<To_String(a)<<" "<<To_String(b);
         a = GetVar(a); b = GetVar(b);
         if(To_String(a)==To_String(b))
             return new Var(true);
@@ -289,4 +287,4 @@ public:
 	}
 };
 
-std::vector<Operator*> operators = {new Add(),new Sub(),new Asg(),new Equ()};
+std::vector<Operator*> operators = {new Add(),new Sub(),new Asg(),new Equ(),new Mul(),new Div(),new Mod(),new Pow(),new More(),new MoreE(),new Less(),new LessE(),new AddTo(),new SubTo(),new DivTo(),new MulTo()};

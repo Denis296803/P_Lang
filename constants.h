@@ -18,7 +18,21 @@ public:
 private:
 	std::uniform_int_distribution<short int> is{1,3};
 };
-std::vector<_Constant*> constants = {new Maybe()};
+class Pie: public _Constant{
+public:
+	Pie(){name="Math.pi";}
+	Var* F() override{
+		return new Var(3.14159265359);
+	}
+};
+class E: public _Constant{
+public:
+	E(){name="Math.e";}
+	Var* F() override{
+		return new Var(2.71828182846);
+	}
+};
+std::vector<_Constant*> constants = {new Maybe(),new E(),new Pie()};
 Var* GetConstant(std::string a){
 	for(_Constant* c:constants){
 		if(a==c->name) return c->F();}
