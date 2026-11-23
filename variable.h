@@ -5,10 +5,11 @@
 #include <cstring>
 #include <iostream>
 #include <algorithm>
+#include <memory>
 
 class Var{
     public:
-        char type;
+        char type='s';
         std::vector<uint8_t> v={};
         std::string name="";
         std::vector<Var*> a={};
@@ -133,10 +134,14 @@ std::string To_String(long long int x){
 std::string To_String(std::string x){
     if(x[0]=='"'&&x[x.length()-1]=='"') x = x.substr(1,x.length()-2);
     std::string s="";
-    for(int i=0;i<x.length()-1;i++){
-        if(x[i]=='\\'&&x[i+1]=='n'){i=i+1;s=s+'\n';}
-        else{s=s+x[i];}
+    if(x.length()>1){
+        for(int i=0;i<x.length()-1;i++){
+            if(x[i]=='\\'&&x[i+1]=='n'){i=i+1;s=s+'\n';}
+            else{s=s+x[i];}
+        }
+        if(x.substr(x.length()-2)!="\\n") s=s+x[x.length()-1];
     }
+    else s = x;
     return s;
 }
 std::string To_String(bool x){
@@ -195,6 +200,7 @@ double To_Double(Var* x){
     if(x->type=='d') return To_Double(x->get_d());
     else if(x->type=='i') return To_Double(x->get_i());
     else if(x->type=='s') return To_Double(x->get_s());
+    else if(x->type=='b') return (x->get_b())?1:0;
     else if(x->type=='p') return To_Double(GetVar(x));
     return 0;
 }
@@ -227,7 +233,8 @@ long long int To_Int(Var* x){
     else if(x->type=='i') return To_Int(x->get_i());
     else if(x->type=='s') return To_Int(x->get_s());
     else if(x->type=='p') return To_Int(GetVar(x));
-    std::cerr<<"Can't convert \""+(x->type)+(std::string)"\"to <Int>\n";
+    else if(x->type=='b') return (x->get_b())?1:0;
+    std::cerr<<"Can't convert \""+(char)(x->type)+(std::string)"\"to <Int>\n";
     throw 'e';
 }
 

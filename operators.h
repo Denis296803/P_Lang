@@ -29,7 +29,12 @@ public:
     Var* F2(Var* a, Var* b) override
     {
 		a = GetVar(a); b = GetVar(b);
-        if(a->type=='s'||b->type=='s'){
+		if(b->type=='a'&&a->type=='a'){
+			std::vector<Var*> v = a->a;
+			for(Var* temp:b->a) v.push_back(temp);
+			return new Var(v);
+		}
+        if(a->type=='s'||b->type=='s'||a->type=='a'||b->type=='a'){
             return new Var(To_String(a)+To_String(b));
         }
         return new Var(To_Double(a)+To_Double(b));
@@ -62,6 +67,16 @@ public:
     Var* F2(Var* a, Var* b) override
     {
         a = GetVar(a); b=GetVar(b);
+		if((b->type=='d'||b->type=='i')&&(a->type=='s'||a->type=='a')||(b->type=='s'||b->type=='a')&&(a->type=='d'||a->type=='i')){
+			if(b->type=='d'||b->type=='i'){
+				std::string s="",tmp=To_String(a);
+				for(int i=0;i<To_Int(b);i++) s=s+tmp;
+				return new Var(s);
+			}
+			std::string s="",tmp=To_String(b);
+				for(int i=0;i<To_Int(a);i++) s=s+tmp;
+				return new Var(s);
+		}
         return new Var(To_Double(a)*To_Double(b));
     }
 };
@@ -286,5 +301,31 @@ public:
 		return b;
 	}
 };
+class Or:public Operator{
+	public:
+		Or(){
+			oper="||";
+			is_unary=false;
+			priority=-1;
+		}
+		Var* F2(Var* a,Var* b){
+			a = GetVar(a); b = GetVar(b);
+			if(a->type=='b'&&b->type=='b') return new Var(To_Bool(a)||To_Bool(b));
+			return new Var(To_Int(a)|To_Int(b));
+		}
+};
+class And:public Operator{
+	public:
+		And(){
+			oper="&&";
+			is_unary=false;
+			priority=0;
+		}
+		Var* F2(Var* a,Var* b){
+			a = GetVar(a); b = GetVar(b);
+			if(a->type=='b'&&b->type=='b') return new Var(To_Bool(a)&&To_Bool(b));
+			return new Var(To_Int(a)&To_Int(b));
+		}
+};
 
-std::vector<Operator*> operators = {new Add(),new Sub(),new Asg(),new Equ(),new Mul(),new Div(),new Mod(),new Pow(),new More(),new MoreE(),new Less(),new LessE(),new AddTo(),new SubTo(),new DivTo(),new MulTo()};
+std::vector<Operator*> operators = {new Add(),new Sub(),new Asg(),new Equ(),new Mul(),new Div(),new Mod(),new Pow(),new More(),new MoreE(),new Less(),new LessE(),new AddTo(),new SubTo(),new DivTo(),new MulTo(),new And(),new Or()};
