@@ -16,7 +16,7 @@ class _Operation
 public:
     _Operation* a; _Operation* b;
     Operator* oper;
-    Var* constant;
+    Var* constant=nullptr;
     std::vector<_Operation*> arguments = {};
     std::vector<_Operation*> code = {};
     Function* function;
@@ -71,7 +71,7 @@ _Operation* _Parse(const std::string& string){
     while(str.size()>0&&str[0]==' ') str=str.substr(1,str.length()-1);
     while(str.size()>0&&str[str.size()-1]==' ') str=str.substr(0,str.length()-1);
     if(str.size()==0){return new _Operation(new Var(""));}
-    //std::cout<<str<<std::endl;
+    //std::cerr<<"Parse: "<<str<<std::endl;
     if(str[0]=='"'&&str[str.length()-1]=='"'){
         Var* v = new Var(str.substr(1,str.length()-2));
         v->type='s';    
@@ -274,10 +274,10 @@ _Operation* _Parse(const std::string& string){
         }
         if(c!=-1){
         	_Operation* o = _Parse(str.substr(c+2,str.length()-3-c));
-            
+            //std::cout<<"Parse: \""<<str.substr(0,c+1)<<"\"; \""<<str.substr(c+2,str.length()-3-c)<<"\"\n";
         	return new _Operation(AutoVar(str.substr(0,c+1)),o);
         }
-        return new _Operation(AutoVar(str));
+        return new _Operation(AutoVar(str),nullptr);
     }
 
 }
@@ -285,6 +285,7 @@ _Operation* _Parse(const std::string& string){
 Var* _Decode(_Operation* tree){
     if(tree->is_leaf){
         if(!tree->is_array){
+            //std::cerr<<"Decode: \""<<To_String(tree->constant)<<"\"; \""<<(tree->key==nullptr?To_String(tree->key):"nullptr")<<"\"\n";
             if(tree->key==nullptr)
             	return tree->constant;
             Var* a = tree->constant;
@@ -296,10 +297,12 @@ Var* _Decode(_Operation* tree){
         for(_Operation* op:tree->code){
             a.push_back(_Decode(op));
         }
+        //std::cerr<<"Decode: "<<To_String(a)<<"\n";
         return new Var(a);
     }
     else if(!(tree->is_leaf)){
         if(!(tree->is_func)){
+            //std::cerr<<"Decode: "<<tree->oper->oper<<"\n";
             if(tree->oper->is_unary){
                 return tree->oper->F1(_Decode(tree->a));
             }
@@ -309,6 +312,7 @@ Var* _Decode(_Operation* tree){
         }
         else{
             if(!(tree->func_exe)&&!(tree->func_type)){
+                //std::cerr<<"Decode: "<<tree->function->name<<"\n";
                 std::vector<Var*> v1 = {};
                 if(tree->arguments.size()>0){
                     for(_Operation* v:tree->arguments)
@@ -317,10 +321,12 @@ Var* _Decode(_Operation* tree){
                 return tree->function->F(v1);
             }
             else if(tree->func_exe){
+                //std::cerr<<"Decode: "<<tree->exeFunc->name<<"\n";
                 tree->exeFunc->F(tree->arguments,tree->code);
                 return nullptr;
             }
             else{
+                //std::cerr<<"Decode: "<<tree->typefunc->name<<"\n";
                 std::vector<Var*> v1;
                 for(_Operation* v:tree->arguments)
                     v1.push_back(GetVar(_Decode(v)));

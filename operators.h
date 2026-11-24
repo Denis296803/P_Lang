@@ -140,6 +140,7 @@ public:
     Var* F2(Var* a, Var* b) override
     {
         b = GetVar(b);
+        //std::cerr<<"ASG: "<<To_String(a)<<" "<<To_String(b)<<"\n";
         SetVar(To_Pointer(a),b,a->key);
         return nullptr;
     }
@@ -302,30 +303,30 @@ public:
 	}
 };
 class Or:public Operator{
-	public:
-		Or(){
-			oper="||";
-			is_unary=false;
-			priority=-1;
-		}
-		Var* F2(Var* a,Var* b){
-			a = GetVar(a); b = GetVar(b);
-			if(a->type=='b'&&b->type=='b') return new Var(To_Bool(a)||To_Bool(b));
-			return new Var(To_Int(a)|To_Int(b));
-		}
+public:
+	Or(){
+		oper="||";
+		is_unary=false;
+		priority=-1;
+	}
+	Var* F2(Var* a,Var* b) override{
+		a = GetVar(a); b = GetVar(b);
+		if(a->type=='b'&&b->type=='b') return new Var(To_Bool(a)||To_Bool(b));
+		return new Var(To_Int(a)|To_Int(b));
+	}
 };
 class And:public Operator{
-	public:
-		And(){
-			oper="&&";
-			is_unary=false;
-			priority=0;
-		}
-		Var* F2(Var* a,Var* b){
-			a = GetVar(a); b = GetVar(b);
-			if(a->type=='b'&&b->type=='b') return new Var(To_Bool(a)&&To_Bool(b));
-			return new Var(To_Int(a)&To_Int(b));
-		}
+public:
+	And(){
+		oper="&&";
+		is_unary=false;
+		priority=0;
+	}
+	Var* F2(Var* a,Var* b) override{
+		a = GetVar(a); b = GetVar(b);
+		if(a->type=='b'&&b->type=='b') return new Var(To_Bool(a)&&To_Bool(b));
+		return new Var(To_Int(a)&To_Int(b));
+	}
 };
 
 std::vector<Operator*> operators = {new Add(),new Sub(),new Asg(),new Equ(),new Mul(),new Div(),new Mod(),new Pow(),new More(),new MoreE(),new Less(),new LessE(),new AddTo(),new SubTo(),new DivTo(),new MulTo(),new And(),new Or()};

@@ -22,10 +22,15 @@ class Var{
         Var(char a){
         	v.resize(1);
         	std::memcpy(v.data(),&a,1);
+            type='s';
         }
         Var(const char* a){
-        	v.resize(1);
-        	std::memcpy(v.data(),&a,1);
+            std::string str(a);
+        	v.resize(str.length());
+            for(int i=0;i<str.length();i++){
+                v[i]=str[i];
+            }
+            type = 's';
         }
         Var(bool a){
             v.resize(1);
@@ -157,13 +162,15 @@ std::string To_String(std::vector<Var*> a){
     return s+']';
 }
 std::string To_String(Var* x){
-    if(x->type=='d') return To_String(x->get_d());
-    if(x->type=='s') return To_String(x->get_s());
-    if(x->type=='i') return To_String(x->get_i());
-    if(x->type=='p') return To_String(x->get_p());
-    if(x->type=='b') return To_String(x->get_b());
-    if(x->type=='a') return To_String(x->get_a());
-    return "";
+    std::string str="";
+    if(x->type=='d') str = To_String(x->get_d());
+    if(x->type=='s') str =  To_String(x->get_s());
+    if(x->type=='i') str =  To_String(x->get_i());
+    if(x->type=='p') str =  To_String(x->get_p());
+    if(x->type=='b') str =  To_String(x->get_b());
+    if(x->type=='a') str =  To_String(x->get_a());
+    //std::cerr<<x->type<<" "<<str<<" ";
+    return str;
 }
 
 double To_Double(double x){
@@ -173,6 +180,8 @@ double To_Double(long long int x){
     return (double)x;
 }
 double To_Double(std::string x){
+    //std::cout<<"To_Double: \""<<x<<"\"\n";
+    if(x=="") return 0;
     double a=0;int deg=1;
     bool wasPoint=false,wasMinus=false;
     for(int i=0;i<x.size();i++){
@@ -189,7 +198,7 @@ double To_Double(std::string x){
 
         }
         else{
-            std::cerr<<"Can't convert to <Double>\n";
+            std::cerr<<"Can't convert \""<<x<<"\" to <Double>\n";
             throw 'e';
         }
     }
@@ -212,7 +221,8 @@ long long int To_Int(long long int x){
     return x;
 }
 long long int To_Int(std::string x){
-    double a=0;
+    if(x=="") return 0;
+    long long int a=0;
     bool wasMinus=false;
     for(int i=0;i<x.size();i++){
         if(x[i]=='-') wasMinus=true;
