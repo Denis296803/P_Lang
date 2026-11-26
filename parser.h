@@ -289,7 +289,7 @@ Var* _Decode(_Operation* tree){
             if(tree->key==nullptr)
             	return tree->constant;
             Var* a = tree->constant;
-            a->type='p';
+            //a->type='p';
             a->key = (tree->key!=nullptr)?_Decode(tree->key):nullptr;
             return a;
         }
